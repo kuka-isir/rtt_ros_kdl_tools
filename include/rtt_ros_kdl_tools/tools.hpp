@@ -52,27 +52,27 @@ namespace rtt_ros_kdl_tools{
 
         if(!kdl_tree.getChain(root_link, tip_link, kdl_chain))
         {
-            RTT::log(RTT::Error) <<"Failed to get KDL chain from tree: "<<RTT::endlog();
-            RTT::log(RTT::Error) <<"  "<<root_link<<" --> "<<tip_link<<RTT::endlog();
-            RTT::log(RTT::Error) <<"  Tree has "<<kdl_tree.getNrOfJoints()<<" joints"<<RTT::endlog();
-            RTT::log(RTT::Error) <<"  Tree has "<<kdl_tree.getNrOfSegments()<<" segments"<<RTT::endlog();
-            RTT::log(RTT::Error) <<"  The segments are:"<<RTT::endlog();
-
-            KDL::SegmentMap segment_map = kdl_tree.getSegments();
-            KDL::SegmentMap::iterator it;
-
-            for( it=segment_map.begin();
-                it != segment_map.end();
-                it++ )
-            {
-                RTT::log(RTT::Error) <<"    "<<(*it).first<<RTT::endlog();
-            }
-
             return false;
+        }
+        RTT::log(RTT::Warning) <<"KDL chain from tree: "<<RTT::endlog();
+        RTT::log(RTT::Warning) <<"  "<<root_link<<" --> "<<tip_link<<RTT::endlog();
+        RTT::log(RTT::Warning) <<"  Tree has "<<kdl_tree.getNrOfJoints()<<" joints"<<RTT::endlog();
+        RTT::log(RTT::Warning) <<"  Tree has "<<kdl_tree.getNrOfSegments()<<" segments"<<RTT::endlog();
+        RTT::log(RTT::Warning) <<"  The segments are:"<<RTT::endlog();
+
+        KDL::SegmentMap segment_map = kdl_tree.getSegments();
+        KDL::SegmentMap::iterator it;
+
+        for( it=segment_map.begin();
+            it != segment_map.end();
+            it++ )
+        {
+            RTT::log(RTT::Warning) <<"    "<<(*it).first<<RTT::endlog();
         }
         return true;
     }
     bool initChainFromROSParamURDF(RTT::TaskContext* task,
+                             const std::string& ns,
                              const std::string& root_link,
                              const std::string& tip_link,
                              KDL::Tree& kdl_tree,
@@ -95,8 +95,10 @@ namespace rtt_ros_kdl_tools{
             return false;
         }
         
-
-        rosparam->getAbsolute("robot_description");
+        rosparam->getParam(ns+"/robot_description","robot_description");
+        
+        RTT::log(RTT::Debug) << "Trying to get robot description at "<<ns+"/robot_description" << RTT::endlog();
+        
         RTT::Property<std::string> robot_description = task->getProperty("robot_description");
         return initChainFromString(robot_description.get(),root_link,tip_link,kdl_tree,kdl_chain);
     }
