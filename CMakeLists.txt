@@ -17,6 +17,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Boost REQUIRED COMPONENTS system)
 
+catkin_package(INCLUDE_DIRS include)
+
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
@@ -32,12 +34,10 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 orocos_install_headers(
-  DIRECTORY include/${PROJECT_NAME}
+include/${PROJECT_NAME}/tools.hpp
 )
 
 orocos_generate_package(
   INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS angles cmake_modules geometry_msgs kdl_parser roscpp rtt_ros sensor_msgs std_msgs tf tf_conversions trajectory_msgs
-  DEPENDS kdl
+  DEPENDS kdl rtt_ros
   )
