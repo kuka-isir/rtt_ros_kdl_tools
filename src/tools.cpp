@@ -86,6 +86,7 @@ void initJointStateFromKDLCHain(const KDL::Chain &kdl_chain,sensor_msgs::JointSt
         it != kdl_chain.segments.end();
         it++)
     {
+        if(it->getJoint().getType()!=KDL::Joint::None)
         joint_state.name.push_back(it->getJoint().getName());
     }
 
