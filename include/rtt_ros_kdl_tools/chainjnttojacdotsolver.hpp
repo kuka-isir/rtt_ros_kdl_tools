@@ -36,7 +36,7 @@ class ChainJntToJacDotSolver : public SolverI
 public:
     static const int E_JAC_DOT_FAILED= -100;
   
-    ChainJntToJacDotSolver(const Chain& chain);
+    explicit ChainJntToJacDotSolver(const Chain& chain);
     virtual ~ChainJntToJacDotSolver();
     virtual int JntToJacDot(const KDL::JntArrayVel& q_in, KDL::Twist& jac_dot_q_dot, int seg_nr = -1);
     int setLockedJoints(const std::vector<bool> locked_joints);
