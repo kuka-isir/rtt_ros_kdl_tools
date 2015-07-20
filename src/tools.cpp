@@ -29,6 +29,8 @@ bool initChainFromString(const std::string& robot_description,
     RTT::log(RTT::Warning) <<"  "<<root_link<<" --> "<<tip_link<<RTT::endlog();
     RTT::log(RTT::Warning) <<"  Tree has "<<kdl_tree.getNrOfJoints()<<" joints"<<RTT::endlog();
     RTT::log(RTT::Warning) <<"  Tree has "<<kdl_tree.getNrOfSegments()<<" segments"<<RTT::endlog();
+    RTT::log(RTT::Warning) <<"  Chain has "<<kdl_chain.getNrOfJoints()<<" joints"<<RTT::endlog();
+    RTT::log(RTT::Warning) <<"  Chain has "<<kdl_chain.getNrOfSegments()<<" segments"<<RTT::endlog();
     RTT::log(RTT::Warning) <<"  The segments are:"<<RTT::endlog();
 
     KDL::SegmentMap segment_map = kdl_tree.getSegments();
@@ -42,20 +44,35 @@ bool initChainFromString(const std::string& robot_description,
     }
     return true;
 }
-bool initChainFromROSParamURDF(RTT::TaskContext* task,
-                            const std::string& root_link,
-                            const std::string& tip_link,
-                            KDL::Tree& kdl_tree,
-                            KDL::Chain& kdl_chain,
-                            const std::string& ros_name,
-                            const std::string& rtt_name
-                            )
+bool initChainFromROSParamURDF(RTT::TaskContext* task, 
+                                   KDL::Tree& kdl_tree, 
+                                   KDL::Chain& kdl_chain, 
+                                   const std::string& robot_description_ros_name/* = "robot_description"*/, 
+                                   const std::string& robot_description_rtt_name/* = "robot_description"*/,
+                                   const std::string& root_link_ros_name/* = "root_link"*/,
+                                   const std::string& root_link_rtt_name/* = "root_link"*/,
+                                   const std::string& tip_link_ros_name/* = "tip_link"*/,
+                                   const std::string& tip_link_rtt_name/* = "tip_link"*/)
 {
     if(task == NULL) return false;
-    if(! task->getProperty(rtt_name))
+    if(! task->getProperty(robot_description_rtt_name))
     {
         RTT::log(RTT::Error) << "robot_description property not found, please add it to your class :\n"
                     <<"this->addProperty(\"robot_description\",robot_description);" << RTT::endlog();
+        return false;
+    }
+    
+    if(! task->getProperty(root_link_rtt_name))
+    {
+        RTT::log(RTT::Error) << "root_link property not found, please add it to your class :\n"
+                    <<"this->addProperty(\"root_link\",root_link);" << RTT::endlog();
+        return false;
+    }
+    
+    if(! task->getProperty(tip_link_rtt_name))
+    {
+        RTT::log(RTT::Error) << "tip_link property not found, please add it to your class :\n"
+                    <<"this->addProperty(\"tip_link\",tip_link);" << RTT::endlog();
         return false;
     }
     
@@ -66,13 +83,27 @@ bool initChainFromROSParamURDF(RTT::TaskContext* task,
         RTT::log(RTT::Error) << "Could not load rosparam service." <<RTT::endlog();
         return false;
     }
+    
+    if(!rosparam->getParam(root_link_ros_name,root_link_rtt_name))
+        RTT::log(RTT::Warning) << root_link_ros_name<<" not provided, using default : " << root_link_rtt_name <<RTT::endlog();
+    if(!rosparam->getParam(tip_link_ros_name,tip_link_rtt_name))
+        RTT::log(RTT::Warning) << tip_link_ros_name<<" not provided, using default : " << tip_link_rtt_name <<RTT::endlog();
+    
+    RTT::Property<std::string> root_link = task->getProperty(root_link_rtt_name);
+    RTT::Property<std::string> tip_link = task->getProperty(tip_link_rtt_name);
+    
+    if(root_link.get().empty() || tip_link.get().empty())
+    {
+        RTT::log(RTT::Error) << "Could not get "<<root_link_ros_name <<" or " << tip_link_ros_name<<RTT::endlog();
+        return false;
+    }
+    
+    rosparam->getParam(robot_description_ros_name,robot_description_rtt_name);
 
-    rosparam->getParam(ros_name,rtt_name);
-
-    RTT::Property<std::string> robot_description = task->getProperty(rtt_name);
+    RTT::Property<std::string> robot_description = task->getProperty(robot_description_rtt_name);
     
     if(robot_description.get().empty())
-        RTT::log(RTT::Error) << "Error to get robot description at "<<ros_name << RTT::endlog();
+        RTT::log(RTT::Error) << "Error to get robot description at "<<robot_description_ros_name << RTT::endlog();
     
     return initChainFromString(robot_description.get(),root_link,tip_link,kdl_tree,kdl_chain);
 }

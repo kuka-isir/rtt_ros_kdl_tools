@@ -38,12 +38,14 @@ namespace rtt_ros_kdl_tools{
                              KDL::Chain& kdl_chain);
     
     bool initChainFromROSParamURDF(RTT::TaskContext* task, 
-                                   const std::string& root_link, 
-                                   const std::string& tip_link, 
                                    KDL::Tree& kdl_tree, 
                                    KDL::Chain& kdl_chain, 
-                                   const std::string& ros_name = "robot_description", 
-                                   const std::string& rtt_name = "robot_description");
+                                   const std::string& robot_description_ros_name = "robot_description", 
+                                   const std::string& robot_description_rtt_name = "robot_description",
+                                   const std::string& root_link_ros_name = "root_link",
+                                   const std::string& root_link_rtt_name = "root_link",
+                                   const std::string& tip_link_ros_name = "tip_link",
+                                   const std::string& tip_link_rtt_name = "tip_link");
     
     void initJointStateFromKDLCHain(const KDL::Chain &kdl_chain,
                                     sensor_msgs::JointState &joint_state);
