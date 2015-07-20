@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rtt_ros_kdl_tools)
-
+set(CMAKE_BUILD_TYPE ReleaseWithDebugInfo)
 find_package(catkin REQUIRED COMPONENTS
   angles
   cmake_modules
