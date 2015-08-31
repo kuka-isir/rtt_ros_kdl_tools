@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rtt_ros_kdl_tools)
-set(CMAKE_BUILD_TYPE ReleaseWithDebugInfo)
+set(CMAKE_BUILD_TYPE Release)
+
 find_package(catkin REQUIRED COMPONENTS
   angles
   cmake_modules
@@ -15,7 +16,6 @@ find_package(catkin REQUIRED COMPONENTS
   trajectory_msgs
 )
 
-find_package(Boost REQUIRED COMPONENTS system)
 find_package(orocos_kdl REQUIRED)
 
 catkin_package(INCLUDE_DIRS include)
@@ -27,14 +27,13 @@ include_directories(
   ${USE_OROCOS_INCLUDE_DIRS}
 )
 
-orocos_library(tools
+orocos_library(${PROJECT_NAME}
    src/tools.cpp
    src/chainjnttojacdotsolver.cpp
 )
 
-target_link_libraries(tools
+target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
-   ${Boost_LIBRARIES}
    ${orocos_kdl_LIBRARIES}
 )
 
