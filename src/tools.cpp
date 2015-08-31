@@ -25,25 +25,23 @@ bool initChainFromString(const std::string& robot_description,
     {
         return false;
     }
-    RTT::log(RTT::Warning) <<"KDL chain from tree: "<<RTT::endlog();
-    RTT::log(RTT::Warning) <<"  "<<root_link<<" --> "<<tip_link<<RTT::endlog();
-    RTT::log(RTT::Warning) <<"  Tree has "<<kdl_tree.getNrOfJoints()<<" joints"<<RTT::endlog();
-    RTT::log(RTT::Warning) <<"  Tree has "<<kdl_tree.getNrOfSegments()<<" segments"<<RTT::endlog();
-    RTT::log(RTT::Warning) <<"  Chain has "<<kdl_chain.getNrOfJoints()<<" joints"<<RTT::endlog();
-    RTT::log(RTT::Warning) <<"  Chain has "<<kdl_chain.getNrOfSegments()<<" segments"<<RTT::endlog();
-    RTT::log(RTT::Warning) <<"  The segments are:"<<RTT::endlog();
-
-    KDL::SegmentMap segment_map = kdl_tree.getSegments();
-    KDL::SegmentMap::iterator it;
-
-    for( it=segment_map.begin();
-        it != segment_map.end();
-        it++ )
-    {
-        RTT::log(RTT::Warning) <<"    "<<(*it).first<<RTT::endlog();
-    }
     return true;
 }
+
+void printChain(const KDL::Chain& kdl_chain)
+{
+    if(kdl_chain.getNrOfSegments() == 0)
+        RTT::log(RTT::Warning) <<"KDL chain empty !"<<RTT::endlog();
+    RTT::log(RTT::Warning) <<"KDL chain from tree: "<<RTT::endlog();
+    if(kdl_chain.getNrOfSegments() > 0)
+        RTT::log(RTT::Warning) <<"  "<<kdl_chain.getSegment(0).getName()<<" --> "<<kdl_chain.getSegment(kdl_chain.getNrOfSegments()-1).getName()<<RTT::endlog();
+    RTT::log(RTT::Warning) <<"  Chain has "<<kdl_chain.getNrOfJoints()<<" joints"<<RTT::endlog();
+    RTT::log(RTT::Warning) <<"  Chain has "<<kdl_chain.getNrOfSegments()<<" segments"<<RTT::endlog();
+
+    for(unsigned int i=0;i<kdl_chain.getNrOfSegments();++i)
+        RTT::log(RTT::Warning) <<"    "<<kdl_chain.getSegment(i).getName()<<RTT::endlog();
+}
+
 bool initChainFromROSParamURDF(RTT::TaskContext* task, 
                                    KDL::Tree& kdl_tree, 
                                    KDL::Chain& kdl_chain, 
@@ -111,26 +109,26 @@ void initJointStateFromKDLCHain(const KDL::Chain &kdl_chain,sensor_msgs::JointSt
 {
     // Construct blank joint state message
     joint_state = sensor_msgs::JointState();
-
     // Add joint names
-    for(std::vector<KDL::Segment>::const_iterator it=kdl_chain.segments.begin();
-        it != kdl_chain.segments.end();
-        it++)
+    for(unsigned int i=0;i<kdl_chain.getNrOfSegments();++i)
     {
-        if(it->getJoint().getType()!=KDL::Joint::None)
-        joint_state.name.push_back(it->getJoint().getName());
+        if(kdl_chain.getSegment(i).getJoint().getType()!=KDL::Joint::None)
+        {
+            const std::string name = kdl_chain.getSegment(i).getJoint().getName();
+            joint_state.name.push_back(name);
+            joint_state.position.push_back(0.);
+            joint_state.velocity.push_back(0.);
+            joint_state.effort.push_back(0.);
+        }  
     }
+}
 
-    // Get the #DOF
-    unsigned int n_dof = kdl_chain.getNrOfJoints();
-
-    // Resize joint vectors
-    joint_state.position.resize(n_dof);
-    joint_state.velocity.resize(n_dof);
-    joint_state.effort.resize(n_dof);
-    joint_state.position.assign(n_dof,0.0);
-    joint_state.velocity.assign(n_dof,0.0);
-    joint_state.effort.assign(n_dof,0.0);
+sensor_msgs::JointState initJointStateFromKDLCHain(const KDL::Chain& kdl_chain)
+{
+    // Construct blank joint state message
+    sensor_msgs::JointState joint_state;
+    initJointStateFromKDLCHain(kdl_chain,joint_state);
+    return joint_state;
 }
 
 }

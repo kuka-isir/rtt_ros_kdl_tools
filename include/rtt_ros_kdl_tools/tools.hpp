@@ -3,8 +3,6 @@
 
 #include <rtt/RTT.hpp>
 #include <rtt/TaskContext.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/graph/graph_concepts.hpp>
 
 #include <kdl/chainiksolvervel_pinv_nso.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
@@ -49,6 +47,10 @@ namespace rtt_ros_kdl_tools{
     
     void initJointStateFromKDLCHain(const KDL::Chain &kdl_chain,
                                     sensor_msgs::JointState &joint_state);
+
+    sensor_msgs::JointState initJointStateFromKDLCHain(const KDL::Chain& kdl_chain);
+
+    void printChain(const KDL::Chain& kdl_chain);
     
 }   
 #endif
