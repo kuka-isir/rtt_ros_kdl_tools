@@ -9,12 +9,24 @@ bool initChainFromString(const std::string& robot_description,
                             KDL::Chain& kdl_chain)
 {
     urdf::Model urdf_model;
-            
+    
     if(!urdf_model.initString(robot_description)) {
         RTT::log(RTT::Error) << "Could not Init URDF." <<RTT::endlog();
         return false;
     }
     
+    for (std::map<std::string,boost::shared_ptr<urdf::Joint> >::iterator joint = urdf_model.joints_.begin();joint != urdf_model.joints_.end(); ++joint)
+    {
+        if(joint->second->limits)
+        {
+            if(joint->second->limits->lower == joint->second->limits->upper)
+            {
+                // HACK: Setting pseudo fixed-joints to FIXED, so that KDL does not considers them.
+                joint->second->type = urdf::Joint::FIXED;
+                RTT::log(RTT::Warning) << "Removing fixed joint "<<joint->second->name<<std::endl;
+            }
+        }
+    }
 
     if (!kdl_parser::treeFromUrdfModel(urdf_model, kdl_tree)){
         RTT::log(RTT::Error) <<("Failed to construct kdl tree");
