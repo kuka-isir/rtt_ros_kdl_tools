@@ -1,4 +1,5 @@
 #include <rtt_ros_kdl_tools/tools.hpp>
+#include <ros/node_handle.h>
 
 namespace rtt_ros_kdl_tools{
 
@@ -8,50 +9,50 @@ bool initChainFromString(const std::string& robot_description,
                             KDL::Tree& kdl_tree,
                             KDL::Chain& kdl_chain)
 {
-    urdf::Model urdf_model;
-    
-    if(!urdf_model.initString(robot_description)) {
-        RTT::log(RTT::Error) << "Could not Init URDF." <<RTT::endlog();
-        return false;
-    }
-    
-    for (std::map<std::string,boost::shared_ptr<urdf::Joint> >::iterator joint = urdf_model.joints_.begin();joint != urdf_model.joints_.end(); ++joint)
+  urdf::Model urdf_model;
+  
+  if(!urdf_model.initString(robot_description)) {
+    ROS_ERROR("Could not init URDF");
+    return false;
+  }
+   
+  for (std::map<std::string,boost::shared_ptr<urdf::Joint> >::iterator joint = urdf_model.joints_.begin();joint != urdf_model.joints_.end(); ++joint)
+  {
+    if(joint->second->limits)
     {
-        if(joint->second->limits)
-        {
-            if(joint->second->limits->lower == joint->second->limits->upper)
-            {
-                // HACK: Setting pseudo fixed-joints to FIXED, so that KDL does not considers them.
-                joint->second->type = urdf::Joint::FIXED;
-                RTT::log(RTT::Warning) << "Removing fixed joint "<<joint->second->name<<std::endl;
-            }
-        }
+      if(joint->second->limits->lower == joint->second->limits->upper)
+      {
+	// HACK: Setting pseudo fixed-joints to FIXED, so that KDL does not considers them.
+	joint->second->type = urdf::Joint::FIXED;
+	ROS_WARN_STREAM("Removing fixed joint "<<joint->second->name<<std::endl);
+      }
     }
+  }
 
-    if (!kdl_parser::treeFromUrdfModel(urdf_model, kdl_tree)){
-        RTT::log(RTT::Error) <<("Failed to construct kdl tree");
-        return false;
-    }
+  if (!kdl_parser::treeFromUrdfModel(urdf_model, kdl_tree)){
+    ROS_ERROR("Failed to construct kdl tree");
+    return false;
+  }
 
-    if(!kdl_tree.getChain(root_link, tip_link, kdl_chain))
-    {
-        return false;
-    }
-    return true;
+  if(!kdl_tree.getChain(root_link, tip_link, kdl_chain))
+  {
+    return false;
+  }
+  return true;
 }
 
 void printChain(const KDL::Chain& kdl_chain)
 {
     if(kdl_chain.getNrOfSegments() == 0)
-        RTT::log(RTT::Warning) <<"KDL chain empty !"<<RTT::endlog();
-    RTT::log(RTT::Warning) <<"KDL chain from tree: "<<RTT::endlog();
+      ROS_WARN("KDL chain empty !");
+    ROS_INFO("KDL chain from tree: ");
     if(kdl_chain.getNrOfSegments() > 0)
-        RTT::log(RTT::Warning) <<"  "<<kdl_chain.getSegment(0).getName()<<" --> "<<kdl_chain.getSegment(kdl_chain.getNrOfSegments()-1).getName()<<RTT::endlog();
-    RTT::log(RTT::Warning) <<"  Chain has "<<kdl_chain.getNrOfJoints()<<" joints"<<RTT::endlog();
-    RTT::log(RTT::Warning) <<"  Chain has "<<kdl_chain.getNrOfSegments()<<" segments"<<RTT::endlog();
+      ROS_INFO_STREAM("  "<<kdl_chain.getSegment(0).getName()<<" --> "<<kdl_chain.getSegment(kdl_chain.getNrOfSegments()-1).getName());
+    ROS_INFO_STREAM("  Chain has "<<kdl_chain.getNrOfJoints()<<" joints");
+    ROS_INFO_STREAM("  Chain has "<<kdl_chain.getNrOfSegments()<<" segments");
 
     for(unsigned int i=0;i<kdl_chain.getNrOfSegments();++i)
-        RTT::log(RTT::Warning) <<"    "<<kdl_chain.getSegment(i).getName()<<RTT::endlog();
+      ROS_INFO_STREAM("    "<<kdl_chain.getSegment(i).getName());
 }
 
 bool initChainFromROSParamURDF(RTT::TaskContext* task, 
@@ -117,6 +118,76 @@ bool initChainFromROSParamURDF(RTT::TaskContext* task,
     
     return initChainFromString(robot_description.get(),root_link,tip_link,kdl_tree,kdl_chain);
 }
+
+bool initChainFromROSParamURDF(KDL::Tree& kdl_tree, 
+                                   KDL::Chain& kdl_chain, 
+                                   const std::string& robot_description_ros_name/* = "robot_description"*/, 
+                                   const std::string& root_link_ros_name/* = "root_link"*/,
+                                   const std::string& tip_link_ros_name/* = "tip_link"*/)
+{
+    ros::NodeHandle nh;
+    std::string robot_description_string, root_link_string, tip_link_string;
+    nh.getParam(robot_description_ros_name, robot_description_string);
+    nh.getParam(root_link_ros_name, root_link_string);
+    nh.getParam(tip_link_ros_name, tip_link_string);
+    
+    return initChainFromString(robot_description_string,root_link_string,tip_link_string,kdl_tree,kdl_chain);
+}
+
+bool readJntLimitsFromROSParamURDF(std::vector<std::string>& limited_jnt_names, 
+				   std::vector<double>& lower_limits, 
+				   std::vector<double>& upper_limits, 
+				   KDL::Tree& kdl_tree,
+				   KDL::Chain& kdl_chain,
+				   const std::string& robot_description_ros_name/* = "robot_description"*/,
+				   const std::string& root_link_ros_name/* = "root_link"*/,
+				   const std::string& tip_link_ros_name/* = "tip_link"*/)
+{
+  limited_jnt_names.clear();
+  lower_limits.clear();
+  upper_limits.clear();
+  
+  ros::NodeHandle nh;
+  std::string robot_description_string, root_link_string, tip_link_string;
+  nh.getParam(robot_description_ros_name, robot_description_string);
+  nh.getParam(root_link_ros_name, root_link_string);
+  nh.getParam(tip_link_ros_name, tip_link_string);
+  
+  urdf::Model urdf_model;
+  
+  if(!urdf_model.initString(robot_description_string)) {
+    ROS_ERROR("Could not init URDF");
+    return false;
+  }
+  
+  if (!kdl_parser::treeFromUrdfModel(urdf_model, kdl_tree)){
+    ROS_ERROR("Failed to construct kdl tree");
+    return false;
+  }
+
+  if(!kdl_tree.getChain(root_link_string, tip_link_string, kdl_chain)){
+    ROS_ERROR("Failed to get kinematic chain");
+    return false;
+  }
+  
+  int nbr_segs = kdl_chain.getNrOfSegments();
+  std::vector<std::string> seg_names;
+  
+  for(int i=0; i<nbr_segs; i++)
+    seg_names.push_back(kdl_chain.getSegment(i).getJoint().getName()); 
+     
+  for (std::map<std::string,boost::shared_ptr<urdf::Joint> >::iterator joint = urdf_model.joints_.begin();joint != urdf_model.joints_.end(); ++joint){      
+    if ( joint->second->limits && std::find(seg_names.begin(), seg_names.end(),joint->second->name)!=seg_names.end() ){
+      if (joint->second->limits->lower != joint->second->limits->upper){
+	limited_jnt_names.push_back(joint->second->name);
+	lower_limits.push_back(joint->second->limits->lower);
+	upper_limits.push_back(joint->second->limits->upper);
+      }
+    }
+  }
+  return true;
+}
+
 void initJointStateFromKDLCHain(const KDL::Chain &kdl_chain,sensor_msgs::JointState &joint_state)
 {
     // Construct blank joint state message
