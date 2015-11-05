@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   kdl_parser
   roscpp
-  rtt_ros
   sensor_msgs
   std_msgs
   tf
@@ -17,6 +16,14 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(orocos_kdl REQUIRED)
+
+find_package(OROCOS-RTT)
+
+if(OROCOS-RTT_FOUND)
+    include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
+else()
+    message(WARNING "OROCOS not found")
+endif()
 
 catkin_package(INCLUDE_DIRS include)
 
@@ -27,22 +34,41 @@ include_directories(
   ${USE_OROCOS_INCLUDE_DIRS}
 )
 
-orocos_library(${PROJECT_NAME}
-   src/tools.cpp
-   src/chainjnttojacdotsolver.cpp
-)
+if(OROCOS-RTT_FOUND)
+  orocos_library(${PROJECT_NAME}
+    src/tools.cpp
+    src/chainjnttojacdotsolver.cpp
+    )
+else()
+  add_library(${PROJECT_NAME}
+    src/tools.cpp
+    src/chainjnttojacdotsolver.cpp
+    )
+endif()
 
 target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    ${orocos_kdl_LIBRARIES}
+   ${USE_OROCOS_LIBRARIES}
 )
 
+if(OROCOS-RTT_FOUND)
 
-orocos_install_headers(DIRECTORY
-include/${PROJECT_NAME}
-)
+  set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY COMPILE_DEFINITIONS RTT_COMPONENT)
+  
+  orocos_install_headers(DIRECTORY
+    include/${PROJECT_NAME}
+    )
 
-orocos_generate_package(
-  INCLUDE_DIRS include
-  DEPENDS rtt_ros
-  )
+  orocos_generate_package(
+    INCLUDE_DIRS include
+    DEPENDS rtt_rosclock rtt_rosparam
+    )
+    
+else()
+  
+  set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY COMPILE_DEFINITIONS NO_OROCOS)
+  
+  catkin_package(INCLUDE_DIRS include)
+
+endif()

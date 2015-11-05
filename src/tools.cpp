@@ -53,7 +53,7 @@ void printChain(const KDL::Chain& kdl_chain)
     for(unsigned int i=0;i<kdl_chain.getNrOfSegments();++i)
         RTT::log(RTT::Warning) <<"    "<<kdl_chain.getSegment(i).getName()<<RTT::endlog();
 }
-
+#ifndef NO_OROCOS
 bool initChainFromROSParamURDF(RTT::TaskContext* task, 
                                    KDL::Tree& kdl_tree, 
                                    KDL::Chain& kdl_chain, 
@@ -117,6 +117,8 @@ bool initChainFromROSParamURDF(RTT::TaskContext* task,
     
     return initChainFromString(robot_description.get(),root_link,tip_link,kdl_tree,kdl_chain);
 }
+#endif
+
 void initJointStateFromKDLCHain(const KDL::Chain &kdl_chain,sensor_msgs::JointState &joint_state)
 {
     // Construct blank joint state message
