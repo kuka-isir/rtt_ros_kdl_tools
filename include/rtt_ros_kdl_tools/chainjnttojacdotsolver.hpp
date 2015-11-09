@@ -30,8 +30,21 @@ namespace KDL
 {
 
 class ChainJntToJacDotSolver : public SolverI
-{
-
+{ 
+    /**
+     * @brief  Class to calculate the jacobian derivative of a general
+     * KDL::Chain, based on 
+     * P.I. Corke, “Robotics, Vision & Control”, Springer 2011, ISBN 978-3-642-20143-1.
+     * 
+     * and
+     * 
+     * http://www.sciencedirect.com/science/article/pii/0094114X9500069B
+     * 
+     * Symbolic differentiation of the velocity mapping for a serial kinematic chain
+     * H. Bruyninckx, J. De Schutter
+     * Department of Mechanical Engineering, Division PMA, 
+     * Katholieke Universiteit Leuven, Celestijnenlaan 300B, B-3001 Heverlee, Belgium
+     */
 public:
     static const int E_JAC_DOT_FAILED= -100;
   
