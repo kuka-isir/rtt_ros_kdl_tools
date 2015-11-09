@@ -20,8 +20,8 @@ namespace rtt_ros_kdl_tools{
     for(int i=0; i<names.size(); i++)
       ROS_INFO_STREAM("  Joint "<<names[i]<<" has limits "<<lower[i]<<" and "<< upper[i]);
     
-    q_.resize(kdl_tree_.getNrOfSegments());
-    qd_.resize(kdl_tree_.getNrOfSegments());
+    q_.resize(kdl_tree_.getNrOfJoints());
+    qd_.resize(kdl_tree_.getNrOfJoints());
     
     treejacsolver_ = new KDL::TreeJntToJacSolver(kdl_tree_);
     fksolver_ = new KDL::TreeFkSolverPos_recursive(kdl_tree_);
