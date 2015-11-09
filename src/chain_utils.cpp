@@ -1,4 +1,4 @@
-#include "rtt_ros_kdl_tools/chainUtils.hpp"
+#include "rtt_ros_kdl_tools/chain_utils.hpp"
 
 namespace rtt_ros_kdl_tools{
 
