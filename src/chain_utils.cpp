@@ -23,11 +23,11 @@ namespace rtt_ros_kdl_tools{
     q_.resize(kdl_chain_.getNrOfJoints());
     qd_.resize(kdl_chain_.getNrOfJoints());
     
-    chainjacsolver_ = new KDL::ChainJntToJacSolver(kdl_chain_);
-    fksolver_ = new KDL::ChainFkSolverPos_recursive(kdl_chain_);
-    fksolvervel_ = new KDL::ChainFkSolverVel_recursive(kdl_chain_);
-    dynModelSolver_ = new KDL::ChainDynParam(kdl_chain_, KDL::Vector(0.,0.,-9.81));
-    jntToJacDotSolver_ = new KDL::ChainJntToJacDotSolver(kdl_chain_);
+    chainjacsolver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
+    fksolver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
+    fksolvervel_.reset(new KDL::ChainFkSolverVel_recursive(kdl_chain_));
+    dynModelSolver_.reset(new KDL::ChainDynParam(kdl_chain_, KDL::Vector(0.,0.,-9.81)));
+    jntToJacDotSolver_.reset(new KDL::ChainJntToJacDotSolver(kdl_chain_));
     
     outdate();
   }  

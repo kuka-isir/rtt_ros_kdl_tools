@@ -8,6 +8,8 @@
 #include <kdl/chainfksolvervel_recursive.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <rtt_ros_kdl_tools/tools.hpp>
 #include <rtt_ros_kdl_tools/chainjnttojacdotsolver.hpp>
 #include <ros/ros.h>
@@ -304,27 +306,27 @@ namespace rtt_ros_kdl_tools{
       /**
 	* @brief The forward kinematic solver for position
 	*/
-      KDL::ChainFkSolverPos_recursive* fksolver_;
+      boost::scoped_ptr<KDL::ChainFkSolverPos_recursive> fksolver_;
       
       /**
 	* @brief The forward kinematic solver for velocity
 	*/
-      KDL::ChainFkSolverVel_recursive* fksolvervel_;
+      boost::scoped_ptr<KDL::ChainFkSolverVel_recursive> fksolvervel_;
 
       /**
 	* @brief The jacobian solver.
 	*/
-      KDL::ChainJntToJacSolver* chainjacsolver_;
+      boost::scoped_ptr<KDL::ChainJntToJacSolver> chainjacsolver_;
       
       /**
 	* @brief The dynamic solver.
 	*/
-      KDL::ChainDynParam* dynModelSolver_;
+      boost::scoped_ptr<KDL::ChainDynParam> dynModelSolver_;
       
       /**
 	* @brief The JdotQdot solver.
 	*/
-      KDL::ChainJntToJacDotSolver* jntToJacDotSolver_;
+      boost::scoped_ptr<KDL::ChainJntToJacDotSolver> jntToJacDotSolver_;
 
 //         Eigen::VectorXd actuatedDofs_;
 //         Eigen::VectorXd lowerLimits_;
