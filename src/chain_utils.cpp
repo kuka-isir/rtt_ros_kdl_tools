@@ -1,4 +1,5 @@
 #include "rtt_ros_kdl_tools/chain_utils.hpp"
+#include <boost/scoped_ptr.hpp>
 
 namespace rtt_ros_kdl_tools{
 
@@ -36,40 +37,51 @@ namespace rtt_ros_kdl_tools{
     return kdl_chain_.getNrOfSegments();
   }
 
-  void ChainUtils::getSegment(int segment, KDL::Segment &kdl_segment){
-    kdl_segment = kdl_chain_.getSegment(segment);
+  const KDL::Segment& ChainUtils::getSegment(int segment){
+    return kdl_chain_.getSegment(segment);
   }
 
-  void ChainUtils::getSegmentPosition(int segment, KDL::Frame &kdl_frame){
+  const KDL::Frame& ChainUtils::getSegmentPosition(int segment){
+    KDL::Frame& kdl_frame;
     fksolver_->JntToCart(q_, kdl_frame, segment);
+    return kdl_frame;
   }
 
-  void ChainUtils::getSegmentPosition(std::string& segment_name, KDL::Frame &kdl_frame){
+  const KDL::Frame& ChainUtils::getSegmentPosition(std::string& segment_name){
+    KDL::Frame& kdl_frame;
     fksolver_->JntToCart(q_, kdl_frame, getSegmentIndex(segment_name));
+    return kdl_frame;
   }
 
-  void ChainUtils::getSegmentVelocity(int segment, KDL::Twist &kdl_twist){
+  const KDL::Twist& ChainUtils::getSegmentVelocity(int segment){
     KDL::FrameVel cart_vel;
     KDL::JntArrayVel vel(q_, qd_);
+    KDL::Twist& kdl_twist;
     fksolvervel_->JntToCart(vel, cart_vel, segment);
-    kdl_twist = cart_vel.GetTwist();
+    *kdl_twist = cart_vel.GetTwist();
+    return kdl_twist;
   }
 
-  void ChainUtils::getSegmentVelocity(std::string& segment_name, KDL::Twist &kdl_twist){
+  const KDL::Twist& ChainUtils::getSegmentVelocity(std::string& segment_name){
     KDL::FrameVel cart_vel;
     KDL::JntArrayVel vel(q_, qd_);
+    KDL::Twist& kdl_twist;
     fksolvervel_->JntToCart(vel, cart_vel, getSegmentIndex(segment_name));
-    kdl_twist = cart_vel.GetTwist();
+    *kdl_twist = cart_vel.GetTwist();
   }
 
-  void ChainUtils::getSegmentJacobian(int segment, KDL::Jacobian &kdl_jacobian){
+  const KDL::Jacobian& ChainUtils::getSegmentJacobian(int segment){
+    KDL::Jacobian& kdl_jacobian;
     kdl_jacobian.resize(kdl_chain_.getNrOfJoints());
     chainjacsolver_->JntToJac(q_, kdl_jacobian, segment);
+    return kdl_jacobian;
   }
 
-  void ChainUtils::getSegmentJacobian(std::string& segment_name, KDL::Jacobian &kdl_jacobian){
+  const KDL::Jacobian& ChainUtils::getSegmentJacobian(std::string& segment_name){
+    KDL::Jacobian& kdl_jacobian;
     kdl_jacobian.resize(kdl_chain_.getNrOfJoints());
     chainjacsolver_->JntToJac(q_, kdl_jacobian, getSegmentIndex(segment_name));
+    return kdl_jacobian;
   }
 
   const std::string& ChainUtils::getSegmentName(int index){
@@ -84,50 +96,54 @@ namespace rtt_ros_kdl_tools{
     return rtt_ros_kdl_tools::readJntLimitsFromROSParamURDF(limited_joints, lower_limits, upper_limits, kdl_tree_, kdl_chain_); 
   }
 
-  void ChainUtils::getJointPositions(KDL::JntArray &q){
-    q = q_;
+  const KDL::JntArray& ChainUtils::getJointPositions(){
+    return q_;
   }
 
-  void ChainUtils::getJointVelocities(KDL::JntArray &qd){
-    qd = qd_;
+  const KDL::JntArray& ChainUtils::getJointVelocities(){
+    return qd_;
   }
 
-  void ChainUtils::getJdotQdot(std::string& segment_name, KDL::Twist &kdl_twist){
+  const KDL::Twist& ChainUtils::getJdotQdot(std::string& segment_name){
     KDL::JntArrayVel jntArrVel;
     jntArrVel.q = q_;
     jntArrVel.qdot = qd_;
+    KDL::Twist& kdl_twist;
     jntToJacDotSolver_->JntToJacDot(jntArrVel, kdl_twist, getSegmentIndex(segment_name));
+    return kdl_twist;
   }
 
-  void ChainUtils::getJdotQdot(int segment, KDL::Twist &kdl_twist){
+  const KDL::Twist& ChainUtils::getJdotQdot(int segment){
     KDL::JntArrayVel jntArrVel;
     jntArrVel.q = q_;
     jntArrVel.qdot = qd_;
+    KDL::Twist& kdl_twist;
     jntToJacDotSolver_->JntToJacDot(jntArrVel, kdl_twist, segment);
+    return kdl_twist;
   }
 
-  void ChainUtils::getInertiaMatrix(KDL::JntSpaceInertiaMatrix &massMatrix ){
+  const KDL::JntSpaceInertiaMatrix& ChainUtils::getInertiaMatrix(){
     if(inertiaMatrixOutdated_ == true){
       computeMassMatrix();
       inertiaMatrixOutdated_ = false;
     }
-    massMatrix = massMatrix_;
+    return massMatrix_;
   }
 
-  void ChainUtils::getCoriolisTorque(KDL::JntArray &corioCentriTorque){
+  const KDL::JntArray& ChainUtils::getCoriolisTorque(){
     if(corioCentriTorqueOutdated_ == true){
       computeCorioCentriTorque();
       corioCentriTorqueOutdated_ = false;
     }
-    corioCentriTorque = corioCentriTorque_;
+    return corioCentriTorque_;
   }
 
-  void ChainUtils::getGravityTorque(KDL::JntArray &gravityTorque){
+  const KDL::JntArray& ChainUtils::getGravityTorque(){
     if(gravityOutdated_ == true){
       computeGravityTorque();
       gravityOutdated_ = false;
     }
-    gravityTorque = gravityTorque_;
+    return gravityTorque_;
   }
 
   void ChainUtils::setJointPosition(std::vector<double> &q_des){

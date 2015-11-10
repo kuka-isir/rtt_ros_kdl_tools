@@ -89,55 +89,55 @@ namespace rtt_ros_kdl_tools{
       int nbSegments();
 
       /**
-	* @brief Gives the kdl segment corresponding to the index
+	* @brief Returns the kdl segment corresponding to the index
 	* @param[in] segment Index number of the segment
-	* @param[out] kdl_segment The corresponding kdl segment
+	* @return The corresponding kdl segment
 	*/
-      void getSegment(int segment, KDL::Segment &kdl_segment);
+      const KDL::Segment& getSegment(int segment);
 
       /**
-	* @brief Gives the kdl frame position corresponding to the index
+	* @brief Returns the kdl frame position corresponding to the index
 	* @param[in] segment Index number of the segment
-	* @param[out] kdl_frame The corresponding positon of the segment
+	* @return The corresponding positon of the segment
 	*/
-      void getSegmentPosition(int segment, KDL::Frame &kdl_frame);
+      const KDL::Frame& getSegmentPosition(int segment);
 
       /**
-	* @brief Gives the kdl frame position corresponding to its name
+	* @brief Returns the kdl frame position corresponding to its name
 	* @param[in] segment_name The segment's name
-	* @param[out] kdl_frame The corresponding positon of the segment
+	* @return The corresponding positon of the segment
 	*/
-      void getSegmentPosition(std::string& segment_name, KDL::Frame &kdl_frame);
+      const KDL::Frame& getSegmentPosition(std::string& segment_name);
 
       /**
-	* @brief Gives the kdl twist corresponding to the index
+	* @brief Returns the kdl twist corresponding to the index
 	* @param[in] segment Index number of the segment
-	* @param[out] kdl_twist The corresponding twist of the segment
+	* @return The corresponding twist of the segment
 	*/
-      void getSegmentVelocity(int segment, KDL::Twist &kdl_twist);
+      const KDL::Twist& getSegmentVelocity(int segment);
 
       /**
-	* @brief Gives the kdl twist corresponding to its name
+	* @brief Returns the kdl twist corresponding to its name
 	* @param[in] segment_name The segment's name
-	* @param[out] kdl_twist The corresponding twist of the segment
+	* @return The corresponding twist of the segment
 	*/
-      void getSegmentVelocity(std::string& segment_name, KDL::Twist &kdl_twist);
+      const KDL::Twist& getSegmentVelocity(std::string& segment_name);
       
       /**
-	* @brief Gives the jacobian expressed in the base frame 
+	* @brief Returns the jacobian expressed in the base frame 
 	*        with the reference point at the end of the segment
 	* @param[in] segment Index number of the segment
-	* @param[out] segment The corresponding jacobian of the segment
+	* @return The corresponding jacobian of the segment
 	*/
-      void getSegmentJacobian(int segment, KDL::Jacobian &kdl_jacobian);
+      const KDL::Jacobian& getSegmentJacobian(int segment);
 
       /**
-	* @brief Gives the jacobian expressed in the base frame 
+	* @brief Returns the jacobian expressed in the base frame 
 	*        with the reference point at the end of the segment
 	* @param[in] segment_name The segment's name
-	* @param[out] segment The corresponding jacobian of the segment
+	* @return The corresponding jacobian of the segment
 	*/
-      void getSegmentJacobian(std::string& segment_name, KDL::Jacobian &kdl_jacobian);
+      const KDL::Jacobian& getSegmentJacobian(std::string& segment_name);
 
       /**
 	* @brief Returns the segment name corresponding to the index
@@ -163,48 +163,48 @@ namespace rtt_ros_kdl_tools{
       bool getJointLimits(std::vector<std::string>& limited_joints, std::vector<double>& lower_limits, std::vector<double>& upper_limits);
       
       /**
-	* @brief Gives a kdl JntArray containing the joints position
-	* @param[out] q The joints position
+	* @brief Returns a kdl JntArray containing the joints position
+	* @return The joints position
 	*/
-      void getJointPositions(KDL::JntArray &q);
+      const KDL::JntArray& getJointPositions();
       
       /**
-	* @brief Gives a kdl JntArray containing the joints velocity
-	* @param[out] qd The joints velocity
+	* @brief Returns a kdl JntArray containing the joints velocity
+	* @return The joints velocity
 	*/
-      void getJointVelocities(KDL::JntArray &qd);
+      const KDL::JntArray& getJointVelocities();
 
       /**
-	* @brief Gives a kdl JntSpaceInertiaMatrix containing the mass matrix
-	* @param[out] massMatrix The mass matrix
+	* @brief Returns a kdl JntSpaceInertiaMatrix containing the mass matrix
+	* @return The mass matrix
 	*/
-      void getInertiaMatrix(KDL::JntSpaceInertiaMatrix &massMatrix);
+      const KDL::JntSpaceInertiaMatrix& getInertiaMatrix();
       
       /**
-	* @brief Gives a kdl JntArray containing the Coriolis torque
-	* @param[out] corioCentriTorque The coriolis torque
+	* @brief Returns a kdl JntArray containing the Coriolis torque
+	* @return The coriolis torque
 	*/
-      void getCoriolisTorque(KDL::JntArray &corioCentriTorque);
+      const KDL::JntArray& getCoriolisTorque();
       
       /**
-	* @brief Gives a kdl JntArray containing the gravitational torque
-	* @param[out] gravityTorque The gravitational torque
+	* @brief Returns a kdl JntArray containing the gravitational torque
+	* @return The gravitational torque
 	*/
-      void getGravityTorque(KDL::JntArray &gravityTorque);
+      const KDL::JntArray& getGravityTorque();
       
       /**
-	* @brief Gives the JdotQdot of segment in a kdl twist
+	* @brief Returns the JdotQdot of segment in a kdl twist
 	* @param[in] segment_name The segment's name
-	* @param[out] kdl_twist JdotQdot
+	* @return JdotQdot
 	*/
-      void getJdotQdot(std::string& segment_name, KDL::Twist &kdl_twist);
+      const KDL::Twist& getJdotQdot(std::string& segment_name);
 
       /**
-	* @brief Gives the JdotQdot of segment in a kdl twist
+	* @brief Returns the JdotQdot of segment in a kdl twist
 	* @param[in] segment The index corresponding to the segment
-	* @param[out] kdl_twist JdotQdot
+	* @return JdotQdot
 	*/
-      void getJdotQdot(int segment, KDL::Twist &kdl_twist);
+      const KDL::Twist& getJdotQdot(int segment);
 
       /**
 	* @brief Sets the joint position of the model.
