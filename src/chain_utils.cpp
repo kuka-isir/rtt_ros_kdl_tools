@@ -20,30 +20,32 @@ namespace rtt_ros_kdl_tools{
     for(int i=0; i<names.size(); i++)
       ROS_INFO_STREAM("  Joint "<<names[i]<<" has limits "<<lower[i]<<" and "<< upper[i]);
     
-    q_.resize(kdl_tree_.getNrOfJoints());
-    qd_.resize(kdl_tree_.getNrOfJoints());
+    q_.resize(kdl_chain_.getNrOfJoints());
+    qd_.resize(kdl_chain_.getNrOfJoints());
     
-    treejacsolver_ = new KDL::TreeJntToJacSolver(kdl_tree_);
-    fksolver_ = new KDL::TreeFkSolverPos_recursive(kdl_tree_);
+    chainjacsolver_ = new KDL::ChainJntToJacSolver(kdl_chain_);
+    fksolver_ = new KDL::ChainFkSolverPos_recursive(kdl_chain_);
     fksolvervel_ = new KDL::ChainFkSolverVel_recursive(kdl_chain_);
     dynModelSolver_ = new KDL::ChainDynParam(kdl_chain_, KDL::Vector(0.,0.,-9.81));
     jntToJacDotSolver_ = new KDL::ChainJntToJacDotSolver(kdl_chain_);
+    
+    outdate();
   }  
 
   int ChainUtils::nbSegments(){
-    return kdl_tree_.getNrOfSegments();
+    return kdl_chain_.getNrOfSegments();
   }
 
   void ChainUtils::getSegment(int segment, KDL::Segment &kdl_segment){
-    kdl_segment = kdl_tree_.getSegment(getSegmentName(segment))->second.segment;
+    kdl_segment = kdl_chain_.getSegment(segment);
   }
 
   void ChainUtils::getSegmentPosition(int segment, KDL::Frame &kdl_frame){
-    fksolver_->JntToCart(q_, kdl_frame, getSegmentName(segment));
+    fksolver_->JntToCart(q_, kdl_frame, segment);
   }
 
   void ChainUtils::getSegmentPosition(std::string& segment_name, KDL::Frame &kdl_frame){
-    fksolver_->JntToCart(q_, kdl_frame, segment_name);
+    fksolver_->JntToCart(q_, kdl_frame, getSegmentIndex(segment_name));
   }
 
   void ChainUtils::getSegmentVelocity(int segment, KDL::Twist &kdl_twist){
@@ -61,13 +63,13 @@ namespace rtt_ros_kdl_tools{
   }
 
   void ChainUtils::getSegmentJacobian(int segment, KDL::Jacobian &kdl_jacobian){
-    kdl_jacobian.resize(kdl_tree_.getNrOfJoints());
-    treejacsolver_->JntToJac(q_, kdl_jacobian, getSegmentName(segment));
+    kdl_jacobian.resize(kdl_chain_.getNrOfJoints());
+    chainjacsolver_->JntToJac(q_, kdl_jacobian, segment);
   }
 
   void ChainUtils::getSegmentJacobian(std::string& segment_name, KDL::Jacobian &kdl_jacobian){
-    kdl_jacobian.resize(kdl_tree_.getNrOfJoints());
-    treejacsolver_->JntToJac(q_, kdl_jacobian, segment_name);
+    kdl_jacobian.resize(kdl_chain_.getNrOfJoints());
+    chainjacsolver_->JntToJac(q_, kdl_jacobian, getSegmentIndex(segment_name));
   }
 
   const std::string& ChainUtils::getSegmentName(int index){
@@ -130,14 +132,14 @@ namespace rtt_ros_kdl_tools{
 
   void ChainUtils::setJointPosition(std::vector<double> &q_des){
     outdate();
-    for(unsigned int i=0; i<kdl_tree_.getNrOfJoints(); i++){
+    for(unsigned int i=0; i<kdl_chain_.getNrOfJoints(); i++){
       q_(i) = q_des[i];
     }
   }
 
   void ChainUtils::setJointVelocity(std::vector<double> &qd_des){
     outdate();
-    for(unsigned int i=0; i<kdl_tree_.getNrOfJoints(); i++){
+    for(unsigned int i=0; i<kdl_chain_.getNrOfJoints(); i++){
       qd_(i) = qd_des[i];
     }
   }

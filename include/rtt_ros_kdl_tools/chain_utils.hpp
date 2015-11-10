@@ -3,11 +3,10 @@
 
 #include <kdl/chain.hpp>
 #include <kdl/tree.hpp>
-#include <kdl/treefksolverpos_recursive.hpp>
-#include <kdl/treejnttojacsolver.hpp>
 #include <kdl/chaindynparam.hpp>
 #include <kdl/jntspaceinertiamatrix.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
 
 #include <rtt_ros_kdl_tools/tools.hpp>
 #include <rtt_ros_kdl_tools/chainjnttojacdotsolver.hpp>
@@ -305,7 +304,7 @@ namespace rtt_ros_kdl_tools{
       /**
 	* @brief The forward kinematic solver for position
 	*/
-      KDL::TreeFkSolverPos_recursive* fksolver_;
+      KDL::ChainFkSolverPos_recursive* fksolver_;
       
       /**
 	* @brief The forward kinematic solver for velocity
@@ -315,7 +314,7 @@ namespace rtt_ros_kdl_tools{
       /**
 	* @brief The jacobian solver.
 	*/
-      KDL::TreeJntToJacSolver* treejacsolver_;
+      KDL::ChainJntToJacSolver* chainjacsolver_;
       
       /**
 	* @brief The dynamic solver.
