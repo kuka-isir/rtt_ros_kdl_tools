@@ -34,34 +34,44 @@ TEST(TestChainUtils, testSetGetPosition){
 
 TEST(TestChainUtils, testGetInertiaMatrix){
   rtt_ros_kdl_tools::ChainUtils chain_utils;
-  std::vector<double> joint_poses, q;
-  joint_poses.push_back(1.603450059890747);
-  joint_poses.push_back(0.3992106020450592);
-  joint_poses.push_back(-0.10936897993087769);
-  joint_poses.push_back(-1.783982515335083);
-  joint_poses.push_back(0.11895296722650528);
-  joint_poses.push_back(0.9718001484870911);
-  joint_poses.push_back(0.1688366532325744);
+  std::vector<double> joint_poses, joint_vels;
+  joint_poses.push_back(1.6036);
+  joint_poses.push_back(0.399208);
+  joint_poses.push_back(-0.109438);
+  joint_poses.push_back(-1.78409);
+  joint_poses.push_back(0.119221);
+  joint_poses.push_back(0.972755);
+  joint_poses.push_back(0.16883);
   chain_utils.setJointPosition(joint_poses);
   
-  KDL::JntArray jnt_array_pose;
-  chain_utils.getJointPositions(jnt_array_pose);
- 
-  for (int i=0; i<chain_utils.kdl_chain_.getNrOfJoints(); i++)
-    q.push_back(jnt_array_pose(i));
+  joint_vels.push_back(0);
+  joint_vels.push_back(0);
+  joint_vels.push_back(0);
+  joint_vels.push_back(0);
+  joint_vels.push_back(0);
+  joint_vels.push_back(0);
+  joint_vels.push_back(0);
+  chain_utils.setJointVelocity(joint_vels);
   
-  KDL::JntSpaceInertiaMatrix mass_mat;
+  KDL::JntSpaceInertiaMatrix mass_mat, real_mass_mat;
   chain_utils.getInertiaMatrix(mass_mat);
   
-  Eigen::MatrixXd real_mass_mat;
-  real_mass_mat << 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-		    0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-		    0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-		    0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-		    0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-		    0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1;
+  real_mass_mat = mass_mat;
+  real_mass_mat.data <<  0.982248 ,    0.0285327,    0.686608,     0.0202515,    0.0314535,    0.00392322,   -0.000120107,
+		    0.0285327,    1.60483,      0.0576687,    -0.407289,    0.00501679,   -0.0026864,   6.80645e-06, 
+		    0.686608,     0.0576687,    0.541618,     0.000733275,  0.0295111,    0.00345672,   -0.000110815,
+		    0.0202515,    -0.407289,    0.000733275,  0.577676,     -0.00507489,  -0.029607,    -1.1825e-05, 
+		    0.0314535,    0.00501679,   0.0295111,    -0.00507489,  0.0118103,    5.56162e-06,  6.77319e-05, 
+		    0.00392322,   -0.0026864,   0.00345672,   -0.029607,    5.56162e-06,  0.010561,     0,           
+		    -0.000120107, 6.80645e-06,  -0.000110815, -1.1825e-05,  6.77319e-05,  0,            0.0001203; 
+
+  ROS_ERROR_STREAM("Mass matrix:");
+  std::cout << mass_mat.data << std::endl;
   
-  EXPECT_TRUE(real_mass_mat == mass_mat.data);
+  ROS_ERROR_STREAM("Real mass matrix:");
+  std::cout << real_mass_mat.data << std::endl;
+  
+  EXPECT_TRUE(KDL::Equal(real_mass_mat, mass_mat, 0.15));
 
 }
 
