@@ -121,7 +121,6 @@ bool initChainFromROSParamURDF(RTT::TaskContext* task,
 
 bool initChainFromROSParamURDF(KDL::Tree& kdl_tree, 
                                    KDL::Chain& kdl_chain, 
-				   const bool& print_chain/* = false*/,
                                    const std::string& robot_description_ros_name/* = "robot_description"*/, 
                                    const std::string& root_link_ros_name/* = "root_link"*/,
                                    const std::string& tip_link_ros_name/* = "tip_link"*/)
@@ -132,22 +131,8 @@ bool initChainFromROSParamURDF(KDL::Tree& kdl_tree,
     nh.getParam(root_link_ros_name, root_link_string);
     nh.getParam(tip_link_ros_name, tip_link_string);
     
-    bool success =  initChainFromString(robot_description_string,root_link_string,tip_link_string,kdl_tree,kdl_chain);
-    
-    if(print_chain){
-      if(kdl_chain.getNrOfSegments() == 0)
-	ROS_WARN("KDL chain empty !");
-      ROS_INFO("KDL chain from tree: ");
-      if(kdl_chain.getNrOfSegments() > 0)
-	ROS_INFO_STREAM("  root_link: "<<root_link_string<<" --> tip_link: "<<tip_link_string);
-      ROS_INFO_STREAM("  Chain has "<<kdl_chain.getNrOfJoints()<<" joints");
-      ROS_INFO_STREAM("  Chain has "<<kdl_chain.getNrOfSegments()<<" segments");
+    return initChainFromString(robot_description_string,root_link_string,tip_link_string,kdl_tree,kdl_chain);
 
-    for(unsigned int i=0;i<kdl_chain.getNrOfSegments();++i)
-      ROS_INFO_STREAM("    "<<kdl_chain.getSegment(i).getName());
-    }
-    
-    return success;
 }
 
 bool readJntLimitsFromROSParamURDF(std::vector<std::string>& limited_jnt_names, 

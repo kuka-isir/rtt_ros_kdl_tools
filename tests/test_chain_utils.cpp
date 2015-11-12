@@ -4,7 +4,8 @@
 
 TEST(TestChainUtils, testGetNbSegments){
   rtt_ros_kdl_tools::ChainUtils chain_utils;
-    
+  chain_utils.printChain();
+  
   EXPECT_TRUE(chain_utils.kdl_chain_.getNrOfSegments() == chain_utils.nbSegments());
 }
 

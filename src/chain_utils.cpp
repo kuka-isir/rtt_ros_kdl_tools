@@ -1,23 +1,14 @@
 #include "rtt_ros_kdl_tools/chain_utils.hpp"
 
 namespace rtt_ros_kdl_tools{
-
-  ChainUtils::ChainUtils(){
-    rtt_ros_kdl_tools::initChainFromROSParamURDF(kdl_tree_, kdl_chain_, true);
+  
+  ChainUtils::ChainUtils(const std::string& robot_description_name, const std::string& root_link_name, const std::string& tip_link_name ){
+    rtt_ros_kdl_tools::initChainFromROSParamURDF(kdl_tree_, kdl_chain_);
+    rtt_ros_kdl_tools::readJntLimitsFromROSParamURDF(joints_name_, joints_lower_limit_, joints_upper_limit_, kdl_tree_, kdl_chain_, robot_description_name, root_link_name, tip_link_name);
     
-    for(unsigned int i=0;i<kdl_chain_.getNrOfSegments();++i){
-      const std::string name = kdl_chain_.getSegment(i).getName();
-      seg_names_idx_.add(name,i+1);
-      ROS_INFO_STREAM("Segment " << int(i) << "-> " << name << " idx -> "<< seg_names_idx_[name]);
-    }
-    
-    std::vector<std::string> names;
-    std::vector<double> lower, upper;
-    rtt_ros_kdl_tools::readJntLimitsFromROSParamURDF(names, lower, upper, kdl_tree_, kdl_chain_);
-    
-    ROS_INFO_STREAM(names.size()<<" joints limited :");
-    for(int i=0; i<names.size(); i++)
-      ROS_INFO_STREAM("  Joint "<<names[i]<<" has limits "<<lower[i]<<" and "<< upper[i]);
+    ros::NodeHandle nh("");
+    nh.getParam(root_link_name, root_link_);
+    nh.getParam(tip_link_name, tip_link_);
     
     q_.resize(kdl_chain_.getNrOfJoints());
     qd_.resize(kdl_chain_.getNrOfJoints());
@@ -34,6 +25,23 @@ namespace rtt_ros_kdl_tools{
     outdate();
   }  
 
+  void ChainUtils::printChain(){
+    if(kdl_chain_.getNrOfSegments() == 0)
+      ROS_WARN("KDL chain empty !");
+    ROS_INFO("KDL chain from tree: ");
+    if(kdl_chain_.getNrOfSegments() > 0)
+      ROS_INFO_STREAM("  root_link: "<<root_link_<<" --> tip_link: "<<tip_link_);
+    ROS_INFO_STREAM("  Chain has "<<kdl_chain_.getNrOfJoints()<<" joints");
+    ROS_INFO_STREAM("  Chain has "<<kdl_chain_.getNrOfSegments()<<" segments");
+
+    for(unsigned int i=0;i<kdl_chain_.getNrOfSegments();++i)
+      ROS_INFO_STREAM("    "<<kdl_chain_.getSegment(i).getName());
+    
+    ROS_INFO_STREAM(joints_name_.size()<<" joints limited :");
+    for(int i=0; i<joints_name_.size(); i++)
+      ROS_INFO_STREAM("  Joint "<<joints_name_[i]<<" has limits "<<joints_lower_limit_[i]<<" and "<< joints_upper_limit_[i]);
+  }
+  
   int ChainUtils::nbSegments(){
     return kdl_chain_.getNrOfSegments();
   }
@@ -82,8 +90,10 @@ namespace rtt_ros_kdl_tools{
     return seg_names_idx_[name];
   }
 
-  bool ChainUtils::getJointLimits(std::vector<std::string>& limited_joints, std::vector<double>& lower_limits, std::vector<double>& upper_limits){
-    return rtt_ros_kdl_tools::readJntLimitsFromROSParamURDF(limited_joints, lower_limits, upper_limits, kdl_tree_, kdl_chain_); 
+  void ChainUtils::getJointLimits(std::vector<std::string>& limited_joints, std::vector<double>& lower_limits, std::vector<double>& upper_limits){
+    limited_joints = joints_name_;
+    lower_limits = joints_lower_limit_;
+    upper_limits = joints_upper_limit_;
   }
 
   void ChainUtils::getJointPositions(KDL::JntArray &q){
