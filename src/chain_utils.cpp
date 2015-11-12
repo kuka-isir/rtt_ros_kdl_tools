@@ -9,7 +9,7 @@ namespace rtt_ros_kdl_tools{
     for(unsigned int i=0;i<kdl_chain_.getNrOfSegments();++i){
       const std::string name = kdl_chain_.getSegment(i).getName();
       seg_names_idx_.add(name,i+1);
-      ROS_WARN_STREAM("Segment " << int(i) << "-> " << name << " idx -> "<< seg_names_idx_[name]);
+      ROS_INFO_STREAM("Segment " << int(i) << "-> " << name << " idx -> "<< seg_names_idx_[name]);
     }
     
     std::vector<std::string> names;
@@ -23,6 +23,8 @@ namespace rtt_ros_kdl_tools{
     q_.resize(kdl_chain_.getNrOfJoints());
     qd_.resize(kdl_chain_.getNrOfJoints());
     massMatrix_.resize(kdl_chain_.getNrOfJoints());
+    gravityTorque_.resize(kdl_chain_.getNrOfJoints());
+    corioCentriTorque_.resize(kdl_chain_.getNrOfJoints());
     
     chainjacsolver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
     fksolver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
