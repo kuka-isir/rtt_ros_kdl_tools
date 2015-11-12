@@ -3,8 +3,7 @@
 namespace rtt_ros_kdl_tools{
 
   ChainUtils::ChainUtils(){
-    rtt_ros_kdl_tools::initChainFromROSParamURDF(kdl_tree_, kdl_chain_);
-    rtt_ros_kdl_tools::printChain(kdl_chain_);  
+    rtt_ros_kdl_tools::initChainFromROSParamURDF(kdl_tree_, kdl_chain_, true);
     
     for(unsigned int i=0;i<kdl_chain_.getNrOfSegments();++i){
       const std::string name = kdl_chain_.getSegment(i).getName();
