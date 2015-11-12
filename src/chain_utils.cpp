@@ -22,6 +22,7 @@ namespace rtt_ros_kdl_tools{
     
     q_.resize(kdl_chain_.getNrOfJoints());
     qd_.resize(kdl_chain_.getNrOfJoints());
+    massMatrix_.resize(kdl_chain_.getNrOfJoints());
     
     chainjacsolver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
     fksolver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));

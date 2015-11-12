@@ -30,11 +30,39 @@ TEST(TestChainUtils, testSetGetPosition){
   
   EXPECT_TRUE(q == joint_poses);
   
+}
+
+TEST(TestChainUtils, testGetInertiaMatrix){
+  rtt_ros_kdl_tools::ChainUtils chain_utils;
+  std::vector<double> joint_poses, q;
+  joint_poses.push_back(1.603450059890747);
+  joint_poses.push_back(0.3992106020450592);
+  joint_poses.push_back(-0.10936897993087769);
+  joint_poses.push_back(-1.783982515335083);
+  joint_poses.push_back(0.11895296722650528);
+  joint_poses.push_back(0.9718001484870911);
+  joint_poses.push_back(0.1688366532325744);
+  chain_utils.setJointPosition(joint_poses);
+  
+  KDL::JntArray jnt_array_pose;
+  chain_utils.getJointPositions(jnt_array_pose);
+ 
+  for (int i=0; i<chain_utils.kdl_chain_.getNrOfJoints(); i++)
+    q.push_back(jnt_array_pose(i));
+  
   KDL::JntSpaceInertiaMatrix mass_mat;
   chain_utils.getInertiaMatrix(mass_mat);
   
-  ROS_ERROR_STREAM("Mass matrix:\n");
-  std::cout << mass_mat.data << std::endl;
+  Eigen::MatrixXd real_mass_mat;
+  real_mass_mat << 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
+		    0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
+		    0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
+		    0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
+		    0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
+		    0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1;
+  
+  EXPECT_TRUE(real_mass_mat == mass_mat.data);
+
 }
 
 TEST(TestChainUtils, testSetGetVelocity){
