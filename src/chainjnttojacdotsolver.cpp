@@ -1,6 +1,6 @@
 /*
-    <one line to give the library's name and an idea of what it does.>
-    Copyright (C) 2015  <copyright holder> <email>
+    Computes the Jacobian time derivative in the hybrid representation
+    Copyright (C) 2015  Antoine Hoarau <hoarau [at] isir.upmc.fr>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -19,142 +19,227 @@
 
 
 #include "rtt_ros_kdl_tools/chainjnttojacdotsolver.hpp"
-
+#include <kdl/chainfksolverpos_recursive.hpp>
+#include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/kinfam_io.hpp>
 #include <kdl/frames_io.hpp>
+#include <kdl/framevel_io.hpp>
 
 namespace KDL
 {
+inline void SetToZero(Rotation& R)
+{
+    for(int i=0;i<9;++i)
+                R.data[i] = 0;   
+}
+
+class SkewSymmetric : public Rotation
+{
+    public : SkewSymmetric(const Vector& w)
+    {
+        SetDiagToZero();
+        SetSkewVector(w);
+    }
+    public : SkewSymmetric(){SetToZero(*this);}
+    public : void SetSkewVector(const Vector& w)
+    {
+            this->data[1] = - w.z();
+            this->data[2] =   w.y();
+            this->data[3] =   w.z();
+            this->data[5] = - w.x();
+            this->data[6] = - w.y();
+            this->data[7] =   w.x();    
+    }
+    private : friend void SetToZero(Rotation& R);
+    private : void SetDiagToZero()
+    {
+        for(int i=0;i<3;++i)
+                this->data[i+3*i] = 0.;
+    }
+};
+
+class Mat6x6
+{
+public :
+    Mat6x6(const Mat6x6& M)
+    {
+        this->data = M.data;
+    }
+    Mat6x6(const Eigen::Matrix<double,6,6>& data_eigen)
+    {
+        this->data = data_eigen;
+    }
+    Mat6x6()
+    {
+        data.setZero();
+    }
+    Mat6x6(const Rotation& R_0_0,const Rotation& R_0_3,const Rotation& R_3_0,const Rotation& R_3_3)
+    {
+        SetUpperLeftCorner(R_0_0);
+        SetUpperRightCorner(R_0_3);
+        SetLowerLeftCorner(R_3_0);
+        SetLowerRightCorner(R_3_3); 
+    }
+    
+    void SetUpperLeftCorner(const Rotation& R){ SetBlock(0,0,3,3,R); }
+    void SetUpperRightCorner(const Rotation& R){ SetBlock(0,3,3,3,R); }
+    void SetLowerLeftCorner(const Rotation& R){ SetBlock(3,0,3,3,R); }
+    void SetLowerRightCorner(const Rotation& R){ SetBlock(3,3,3,3,R); }
+    
+    void SetBlock(const unsigned& i,const unsigned& j,
+                  const unsigned& p,const unsigned& q,
+                  const Rotation& R)
+    {
+        data.block(i,j,p,q) = Eigen::Matrix<double,3,3>::Map(R.data);
+    }
+    inline friend void SetToZero(Mat6x6& M);
+    Mat6x6 operator-(){return Mat6x6(-this->data);}
+    inline friend Jacobian operator*(const Mat6x6& M,const Jacobian& J);
+    Eigen::Matrix<double,6,6> data;
+};    
+
+class Mat3x3 : public Rotation
+{
+public:
+    Mat3x3()
+    {
+        SetToZero(*this);
+    }
+    static Mat3x3 Zero(){return Mat3x3();}
+};
+
+inline Jacobian operator*(const Mat6x6& M,const Jacobian& J)
+{
+    Jacobian J_tmp(J.columns());
+    J_tmp.data = M.data * J.data;
+    return J_tmp;
+}
+
+inline Twist operator*(const Mat6x6& M,const Twist& t)
+{
+    Eigen::Matrix<double,6,1> tw,tw_out;
+    for(int i=0;i<6;i++)
+        tw(i) = t(i);
+    tw_out = M.data * tw;    
+    return Twist(Vector(tw_out(0),tw_out(1),tw_out(2)),Vector(tw_out(3),tw_out(4),tw_out(5)));
+}
+
+inline void SetToZero(Mat6x6& M)
+{
+    M.data.setZero();
+}
+
 ChainJntToJacDotSolver::ChainJntToJacDotSolver(const Chain& _chain):
 chain(_chain),
 locked_joints_(chain.getNrOfJoints(),false),
 nr_of_unlocked_joints_(chain.getNrOfJoints()),
-Q(chain.getNrOfSegments()),
-a(chain.getNrOfSegments()),
-P(chain.getNrOfSegments()),
-e(chain.getNrOfSegments()),
-w(chain.getNrOfSegments()),
-ed(chain.getNrOfSegments()),
-rd(chain.getNrOfSegments()),
-ud(chain.getNrOfSegments()),
-v(chain.getNrOfSegments()),
-r(chain.getNrOfSegments()),
-F_i_im1(Frame::Identity()),
-F_0_i(Frame::Identity())
+jac_solver_(chain),
+bs_J_ee_(chain.getNrOfJoints()),
+bs_Jdot_ee_(chain.getNrOfJoints())
 {
 
 }
+
 int ChainJntToJacDotSolver::JntToJacDot(const JntArrayVel& q_in, Twist& jac_dot_q_dot, int seg_nr)
 {
-    unsigned int segmentNr;
-    if(seg_nr<0)
-        segmentNr=chain.getNrOfSegments();
-    else
-        segmentNr = seg_nr;
-
-    if(q_in.q.rows()!=chain.getNrOfJoints())
-        return (error = E_JAC_DOT_FAILED);
-    else if(segmentNr>chain.getNrOfSegments())
-        return (error = E_JAC_DOT_FAILED);
-
-    int j=0;
-    F_0_i = Frame::Identity();
-    
-    j = 0;
-    for (unsigned int i=0;i<segmentNr;++i)
-    {
-      if(chain.getSegment(i).getJoint().getType()!=Joint::None)
-      {
-        F_i_im1 = chain.getSegment(i).pose(q_in.q(j)); //Fk
-        j++;
-      }else{
-        F_i_im1 = chain.getSegment(i).pose(0.0);
-      }
-      F_0_i = F_0_i * F_i_im1;
-      
-      P[i] = F_0_i.M;
-      e[i] = Vector(P[i](0,2) , P[i](1,2), P[i](2,2));
-      
-      Q[i] = F_i_im1.M;
-      a[i] = chain.getSegment(i).getFrameToTip().p;
-    }
-    
-    // Step 1
-    j=0;
-    if(chain.getSegment(0).getJoint().getType()!=Joint::None){
-      w[0] = q_in.qdot(0) * e[0];
-      j++;
-    }else{
-      w[0] = Vector(0,0,0) * e[0];
-    }
-    for (unsigned int i=0;i<segmentNr-1;++i)
-    {
-      if(chain.getSegment(i+1).getJoint().getType()!=Joint::None){
-        w[i+1] = q_in.qdot(j) * e[i] + Q[i].Inverse() * w[i];
-        j++;
-      }else{
-        w[i+1] = Q[i].Inverse() * w[i];
-      }
-    }
-
-    // Step 2
-    for (unsigned int i=0;i<segmentNr;++i)
-    {
-      ed[i] = w[i] * e[i];
-    }
-    
-    // Step 3
-    rd[segmentNr-1] = w[segmentNr-1] * a[segmentNr-1];
-    for (int i=segmentNr-2;i>=0;i--)
-    {
-      rd[i] = w[i] * a[i] + Q[i] * rd[i+1];
-    }
-    
-    r[segmentNr-1] = a[segmentNr-1];
-    for (int i=segmentNr-2;i>=0;i--)
-    {
-      r[i] = a[i] + Q[i] * r[i+1];
-    }
-     
-    ud[0] = e[0] * rd[0];
-    for (unsigned int i=1;i<segmentNr;++i)
-    {
-      ud[i] = ed[i] * r[i] + e[i] * rd[i];
-      
-    }
-
-    // Step 4
-      
-    j = chain.getNrOfJoints() - 1;
-    
-    ud_ed.vel = ud[segmentNr-1];
-    ud_ed.rot = ed[segmentNr-1];
-    
-    if(chain.getSegment(segmentNr-1).getJoint().getType()!=Joint::None){
-      v[segmentNr-1] = q_in.qdot(j) * ud_ed;
-      j--;
-    }else{
-      v[segmentNr-1] = 0.0 * ud_ed;
-    }
-    
-    for (int i=segmentNr-2;i>=0;i--)
-    {
-      Ui_v_i1.vel = Q[i] * v[i+1].vel;
-      Ui_v_i1.rot = Q[i] * v[i+1].rot;
-      udi_edi.vel = ud[i];
-      udi_edi.rot = ed[i];
-            
-      if(chain.getSegment(i).getJoint().getType()!=Joint::None){
-        v[i] = q_in.qdot(j) * udi_edi + Ui_v_i1;
-        j--;
-      }else{
-        v[i] = Ui_v_i1;
-      }
-    }
- 
-    jac_dot_q_dot = v[0];
+    JntToJacDot(q_in,bs_Jdot_ee_,seg_nr);
+    MultiplyJacobian(bs_Jdot_ee_,q_in.qdot,jac_dot_q_dot);
     return (error = E_NOERROR);
 }
+
+int ChainJntToJacDotSolver::JntToJacDot(const JntArrayVel& q_in, Jacobian& jdot, int seg_nr)
+{
+        unsigned int segmentNr;
+        if(seg_nr<0)
+            segmentNr=chain.getNrOfSegments();
+        else
+            segmentNr = seg_nr;
+
+        //Initialize Jacobian to zero since only segmentNr colunns are computed
+        SetToZero(jdot) ;
+
+        if(q_in.q.rows()!=chain.getNrOfJoints()||nr_of_unlocked_joints_!=jdot.columns())
+            return (error = E_JAC_DOT_FAILED);
+        else if(segmentNr>chain.getNrOfSegments())
+            return (error = E_JAC_DOT_FAILED);
+                
+        Twist J_dot_k;
+        jac_solver_.JntToJac(q_in.q,bs_J_ee_);
+        int k=0;
+        for(unsigned int i=0;i<segmentNr;++i)
+        {
+            //Only increase joint nr if the segment has a joint
+            if(chain.getSegment(i).getJoint().getType()!=Joint::None){
+                
+                for(unsigned int j=0;j<chain.getNrOfJoints();++j)
+                {
+                    // Column J is the sum of all partial derivatives  ref (41)
+                    Twist dJdq = getPartialDerivativeHybrid(bs_J_ee_,j,k);
+                    //std::cout << "dJ"<<k<<"dq"<<j<<" "<<dJdq<<std::endl;
+                    //std::cout << "dJ"<<k<<"dq"<<j<<" * qdot"<<j<<dJdq * q_in.qdot(j)<<std::endl;
+                    J_dot_k += dJdq * q_in.qdot(j);
+                }
+                jdot.setColumn(k++,J_dot_k);
+                SetToZero(J_dot_k);
+            }
+        }
+        
+        return (error = E_NOERROR);
+}
+Twist ChainJntToJacDotSolver::getPartialDerivativeHybrid(const Jacobian& bs_J_ee,
+                                      const unsigned int& joint_idx,
+                                      const unsigned int& column_idx)
+{
+        int j=joint_idx;
+        int i=column_idx;
+        
+        Twist bs_t_j_ee;
+        SkewSymmetric bs_e_j_x;
+        Mat6x6 P_d_bs_Jj;
+        SkewSymmetric bs_v_j_ee_x;
+        Mat6x6 M_d_J_j_ee;
+        
+        SetToZero(bs_t_j_ee);
+        
+        // ref (6)
+        bs_e_j_x.SetSkewVector(bs_J_ee.getColumn(j).rot);
+        
+        // P_{\Delta}({}_{bs}J^{j})  ref (20)
+        P_d_bs_Jj.SetUpperLeftCorner(bs_e_j_x);
+        P_d_bs_Jj.SetLowerRightCorner(bs_e_j_x);
+        
+        bs_v_j_ee_x.SetSkewVector(bs_J_ee.getColumn(j).vel);
+        
+        // M_{\Delta}({}_{bs}J^{j})  ref (23)
+        M_d_J_j_ee.SetUpperRightCorner(bs_v_j_ee_x);
+        
+        //std::cout << "******************** Calculating dJ"<<i<<"/dq"<<j<<std::endl;
+        if(j < i)
+        {
+            //std::cout << "j < i" << std::endl;
+            bs_t_j_ee = P_d_bs_Jj * bs_J_ee.getColumn(i);
+            //std::cout << "P_d_bs_Jj_"<<i<<"\n"<<P_d_bs_Jj.data<<std::endl;
+        }else if(j > i)
+        {
+            //std::cout << "j > i" << std::endl;
+            bs_t_j_ee = -M_d_J_j_ee * bs_J_ee.getColumn(i);
+            //std::cout << "M_d_J_j_ee_"<<i<<"\n"<<M_d_J_j_ee.data<<std::endl;
+        }else if(j == i)
+        {
+             //std::cout << "j == i" << std::endl;
+             SetToZero(bs_t_j_ee.rot);
+             bs_t_j_ee.vel = bs_J_ee.getColumn(i).rot * (-bs_J_ee.getColumn(i).vel);
+             //std::cout << "P_d_bs_Jj_"<<i<<"\n"<<P_d_bs_Jj.data<<std::endl;
+             //std::cout << "Should be equal to : " << P_d_bs_Jj * bs_J_ee.getColumn(i)<<std::endl;
+        }
+        
+        //std::cout <<"bs_J_ee_"<<i<<": "<< bs_J_ee.getColumn(i) << std::endl;
+        // ! \\ TODO: Find out why we get minus the twist
+        return -bs_t_j_ee;
+
+}
+
+
 int ChainJntToJacDotSolver::setLockedJoints(const std::vector< bool > locked_joints)
 {
     if(locked_joints.size()!=locked_joints_.size())
