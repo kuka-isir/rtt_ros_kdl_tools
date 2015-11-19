@@ -132,6 +132,7 @@ bool initChainFromROSParamURDF(KDL::Tree& kdl_tree,
     nh.getParam(tip_link_ros_name, tip_link_string);
     
     return initChainFromString(robot_description_string,root_link_string,tip_link_string,kdl_tree,kdl_chain);
+
 }
 
 bool readJntLimitsFromROSParamURDF(std::vector<std::string>& limited_jnt_names, 

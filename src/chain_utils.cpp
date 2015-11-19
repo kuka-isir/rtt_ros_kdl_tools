@@ -1,49 +1,61 @@
 #include "rtt_ros_kdl_tools/chain_utils.hpp"
 
 namespace rtt_ros_kdl_tools{
-
-  ChainUtils::ChainUtils(){
+  
+  ChainUtils::ChainUtils(const std::string& robot_description_name, const std::string& root_link_name, const std::string& tip_link_name ){
     rtt_ros_kdl_tools::initChainFromROSParamURDF(kdl_tree_, kdl_chain_);
-    rtt_ros_kdl_tools::printChain(kdl_chain_);  
+    rtt_ros_kdl_tools::readJntLimitsFromROSParamURDF(joints_name_, joints_lower_limit_, joints_upper_limit_, kdl_tree_, kdl_chain_, robot_description_name, root_link_name, tip_link_name);
     
-    for(unsigned int i=0;i<kdl_chain_.getNrOfSegments();++i){
-      const std::string name = kdl_chain_.getSegment(i).getName();
-      seg_names_idx_.add(name,i+1);
-      ROS_WARN_STREAM("Segment " << int(i) << "-> " << name << " idx -> "<< seg_names_idx_[name]);
-    }
+    ros::NodeHandle nh("");
+    nh.getParam(root_link_name, root_link_);
+    nh.getParam(tip_link_name, tip_link_);
     
-    std::vector<std::string> names;
-    std::vector<double> lower, upper;
-    rtt_ros_kdl_tools::readJntLimitsFromROSParamURDF(names, lower, upper, kdl_tree_, kdl_chain_);
+    q_.resize(kdl_chain_.getNrOfJoints());
+    qd_.resize(kdl_chain_.getNrOfJoints());
+    massMatrix_.resize(kdl_chain_.getNrOfJoints());
+    gravityTorque_.resize(kdl_chain_.getNrOfJoints());
+    corioCentriTorque_.resize(kdl_chain_.getNrOfJoints());
     
-    ROS_INFO_STREAM(names.size()<<" joints limited :");
-    for(int i=0; i<names.size(); i++)
-      ROS_INFO_STREAM("  Joint "<<names[i]<<" has limits "<<lower[i]<<" and "<< upper[i]);
+    chainjacsolver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
+    fksolver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
+    fksolvervel_.reset(new KDL::ChainFkSolverVel_recursive(kdl_chain_));
+    dynModelSolver_.reset(new KDL::ChainDynParam(kdl_chain_, KDL::Vector(0.,0.,-9.81)));
+    jntToJacDotSolver_.reset(new KDL::ChainJntToJacDotSolver(kdl_chain_));
     
-    q_.resize(kdl_tree_.getNrOfJoints());
-    qd_.resize(kdl_tree_.getNrOfJoints());
-    
-    treejacsolver_ = new KDL::TreeJntToJacSolver(kdl_tree_);
-    fksolver_ = new KDL::TreeFkSolverPos_recursive(kdl_tree_);
-    fksolvervel_ = new KDL::ChainFkSolverVel_recursive(kdl_chain_);
-    dynModelSolver_ = new KDL::ChainDynParam(kdl_chain_, KDL::Vector(0.,0.,-9.81));
-    jntToJacDotSolver_ = new KDL::ChainJntToJacDotSolver(kdl_chain_);
+    outdate();
   }  
 
+  void ChainUtils::printChain(){
+    if(kdl_chain_.getNrOfSegments() == 0)
+      ROS_WARN("KDL chain empty !");
+    ROS_INFO("KDL chain from tree: ");
+    if(kdl_chain_.getNrOfSegments() > 0)
+      ROS_INFO_STREAM("  root_link: "<<root_link_<<" --> tip_link: "<<tip_link_);
+    ROS_INFO_STREAM("  Chain has "<<kdl_chain_.getNrOfJoints()<<" joints");
+    ROS_INFO_STREAM("  Chain has "<<kdl_chain_.getNrOfSegments()<<" segments");
+
+    for(unsigned int i=0;i<kdl_chain_.getNrOfSegments();++i)
+      ROS_INFO_STREAM("    "<<kdl_chain_.getSegment(i).getName());
+    
+    ROS_INFO_STREAM(joints_name_.size()<<" joints limited :");
+    for(int i=0; i<joints_name_.size(); i++)
+      ROS_INFO_STREAM("  Joint "<<joints_name_[i]<<" has limits "<<joints_lower_limit_[i]<<" and "<< joints_upper_limit_[i]);
+  }
+  
   int ChainUtils::nbSegments(){
-    return kdl_tree_.getNrOfSegments();
+    return kdl_chain_.getNrOfSegments();
   }
 
   void ChainUtils::getSegment(int segment, KDL::Segment &kdl_segment){
-    kdl_segment = kdl_tree_.getSegment(getSegmentName(segment))->second.segment;
+    kdl_segment = kdl_chain_.getSegment(segment);
   }
 
   void ChainUtils::getSegmentPosition(int segment, KDL::Frame &kdl_frame){
-    fksolver_->JntToCart(q_, kdl_frame, getSegmentName(segment));
+    fksolver_->JntToCart(q_, kdl_frame, segment);
   }
 
   void ChainUtils::getSegmentPosition(std::string& segment_name, KDL::Frame &kdl_frame){
-    fksolver_->JntToCart(q_, kdl_frame, segment_name);
+    fksolver_->JntToCart(q_, kdl_frame, getSegmentIndex(segment_name));
   }
 
   void ChainUtils::getSegmentVelocity(int segment, KDL::Twist &kdl_twist){
@@ -61,13 +73,13 @@ namespace rtt_ros_kdl_tools{
   }
 
   void ChainUtils::getSegmentJacobian(int segment, KDL::Jacobian &kdl_jacobian){
-    kdl_jacobian.resize(kdl_tree_.getNrOfJoints());
-    treejacsolver_->JntToJac(q_, kdl_jacobian, getSegmentName(segment));
+    kdl_jacobian.resize(kdl_chain_.getNrOfJoints());
+    chainjacsolver_->JntToJac(q_, kdl_jacobian, segment);
   }
 
   void ChainUtils::getSegmentJacobian(std::string& segment_name, KDL::Jacobian &kdl_jacobian){
-    kdl_jacobian.resize(kdl_tree_.getNrOfJoints());
-    treejacsolver_->JntToJac(q_, kdl_jacobian, segment_name);
+    kdl_jacobian.resize(kdl_chain_.getNrOfJoints());
+    chainjacsolver_->JntToJac(q_, kdl_jacobian, getSegmentIndex(segment_name));
   }
 
   const std::string& ChainUtils::getSegmentName(int index){
@@ -78,8 +90,10 @@ namespace rtt_ros_kdl_tools{
     return seg_names_idx_[name];
   }
 
-  bool ChainUtils::getJointLimits(std::vector<std::string>& limited_joints, std::vector<double>& lower_limits, std::vector<double>& upper_limits){
-    return rtt_ros_kdl_tools::readJntLimitsFromROSParamURDF(limited_joints, lower_limits, upper_limits, kdl_tree_, kdl_chain_); 
+  void ChainUtils::getJointLimits(std::vector<std::string>& limited_joints, std::vector<double>& lower_limits, std::vector<double>& upper_limits){
+    limited_joints = joints_name_;
+    lower_limits = joints_lower_limit_;
+    upper_limits = joints_upper_limit_;
   }
 
   void ChainUtils::getJointPositions(KDL::JntArray &q){
@@ -130,14 +144,14 @@ namespace rtt_ros_kdl_tools{
 
   void ChainUtils::setJointPosition(std::vector<double> &q_des){
     outdate();
-    for(unsigned int i=0; i<kdl_tree_.getNrOfJoints(); i++){
+    for(unsigned int i=0; i<kdl_chain_.getNrOfJoints(); i++){
       q_(i) = q_des[i];
     }
   }
 
   void ChainUtils::setJointVelocity(std::vector<double> &qd_des){
     outdate();
-    for(unsigned int i=0; i<kdl_tree_.getNrOfJoints(); i++){
+    for(unsigned int i=0; i<kdl_chain_.getNrOfJoints(); i++){
       qd_(i) = qd_des[i];
     }
   }

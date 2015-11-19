@@ -46,7 +46,7 @@ namespace rtt_ros_kdl_tools{
                                    const std::string& tip_link_rtt_name = "tip_link");
     
     bool initChainFromROSParamURDF(KDL::Tree& kdl_tree, 
-				KDL::Chain& kdl_chain, 
+				KDL::Chain& kdl_chain,
 				const std::string& robot_description_ros_name = "robot_description", 
 				const std::string& root_link_ros_name = "root_link",
 				const std::string& tip_link_ros_name = "tip_link");

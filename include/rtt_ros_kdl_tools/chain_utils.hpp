@@ -3,11 +3,12 @@
 
 #include <kdl/chain.hpp>
 #include <kdl/tree.hpp>
-#include <kdl/treefksolverpos_recursive.hpp>
-#include <kdl/treejnttojacsolver.hpp>
 #include <kdl/chaindynparam.hpp>
 #include <kdl/jntspaceinertiamatrix.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
+
+#include <boost/scoped_ptr.hpp>
 
 #include <rtt_ros_kdl_tools/tools.hpp>
 #include <rtt_ros_kdl_tools/chainjnttojacdotsolver.hpp>
@@ -42,8 +43,34 @@ namespace rtt_ros_kdl_tools{
   
   class ChainUtils{
     public:
-      ChainUtils();
-    
+//       ChainUtils();
+      ChainUtils(const std::string& robot_description_name = "robot_description", const std::string& root_link = "root_link", const std::string& tip_link = "tip_link");
+      
+      /**
+	* @brief The root link of the kdl chain
+	*/
+      std::string root_link_;
+      
+      /**
+	* @brief The tip link of the kdl chain
+	*/
+      std::string tip_link_;
+      
+      /**
+	* @brief The joints name
+	*/
+      std::vector<std::string> joints_name_;
+      
+      /**
+	* @brief The joints lower limits
+	*/
+      std::vector<double> joints_lower_limit_;
+      
+      /**
+	* @brief The joints upper limits
+	*/
+      std::vector<double> joints_upper_limit_;
+      
       /**
 	* @brief The kinematic tree of the robot.
 	*/
@@ -82,6 +109,12 @@ namespace rtt_ros_kdl_tools{
 	* for the current joint position.
 	*/          
 //         KDL::JntArray externalWrenchTorque_;
+
+      /**
+	* @brief Prints information about the kdl chain
+	*/
+      void printChain();
+
 
       /**
 	* @brief Returns the number of segments
@@ -159,9 +192,8 @@ namespace rtt_ros_kdl_tools{
 	* @param[out] limited_joints The names of the joints that have joint limits
 	* @param[out] lower_limits The lower limits
 	* @param[out] upper_limits The upper limits
-	* @return True if the operation was successfull
 	*/
-      bool getJointLimits(std::vector<std::string>& limited_joints, std::vector<double>& lower_limits, std::vector<double>& upper_limits);
+      void getJointLimits(std::vector<std::string>& limited_joints, std::vector<double>& lower_limits, std::vector<double>& upper_limits);
       
       /**
 	* @brief Gives a kdl JntArray containing the joints position
@@ -305,27 +337,27 @@ namespace rtt_ros_kdl_tools{
       /**
 	* @brief The forward kinematic solver for position
 	*/
-      KDL::TreeFkSolverPos_recursive* fksolver_;
+      boost::scoped_ptr<KDL::ChainFkSolverPos_recursive> fksolver_;
       
       /**
 	* @brief The forward kinematic solver for velocity
 	*/
-      KDL::ChainFkSolverVel_recursive* fksolvervel_;
+      boost::scoped_ptr<KDL::ChainFkSolverVel_recursive> fksolvervel_;
 
       /**
 	* @brief The jacobian solver.
 	*/
-      KDL::TreeJntToJacSolver* treejacsolver_;
+      boost::scoped_ptr<KDL::ChainJntToJacSolver> chainjacsolver_;
       
       /**
 	* @brief The dynamic solver.
 	*/
-      KDL::ChainDynParam* dynModelSolver_;
+      boost::scoped_ptr<KDL::ChainDynParam> dynModelSolver_;
       
       /**
 	* @brief The JdotQdot solver.
 	*/
-      KDL::ChainJntToJacDotSolver* jntToJacDotSolver_;
+      boost::scoped_ptr<KDL::ChainJntToJacDotSolver> jntToJacDotSolver_;
 
 //         Eigen::VectorXd actuatedDofs_;
 //         Eigen::VectorXd lowerLimits_;
