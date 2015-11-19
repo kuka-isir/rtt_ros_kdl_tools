@@ -47,6 +47,8 @@ orocos_generate_package(
   DEPENDS rtt_ros
   )
 
-add_executable(test_chain_utils tests/test_chain_utils.cpp src/chain_utils.cpp src/tools.cpp src/chainjnttojacdotsolver.cpp)
-add_dependencies(test_chain_utils ${PROJECT_NAME}_generate_messages_cpp)
-target_link_libraries(test_chain_utils ${catkin_LIBRARIES})
+
+if(CATKIN_ENABLE_TESTING)
+    catkin_add_gtest(test_jdot tests/test_jdot.cpp src/chainjnttojacdotsolver.cpp)
+    target_link_libraries(test_jdot ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+endif()
