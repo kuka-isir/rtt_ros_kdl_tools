@@ -49,8 +49,23 @@ namespace rtt_ros_kdl_tools{
                                    const std::string& tip_link_ros_name = "tip_link",
                                    const std::string& tip_link_rtt_name = "tip_link");
 #endif    
+    bool initChainFromROSParamURDF(KDL::Tree& kdl_tree, 
+				KDL::Chain& kdl_chain,
+				const std::string& robot_description_ros_name = "robot_description", 
+				const std::string& root_link_ros_name = "root_link",
+				const std::string& tip_link_ros_name = "tip_link");
+    
     void initJointStateFromKDLCHain(const KDL::Chain &kdl_chain,
                                     sensor_msgs::JointState &joint_state);
+    
+    bool readJntLimitsFromROSParamURDF(std::vector<std::string>& limited_jnt_names, 
+				   std::vector<double>& lower_limits, 
+				   std::vector<double>& upper_limits, 
+				   KDL::Tree& kdl_tree,
+				   KDL::Chain& kdl_chain,
+				   const std::string& robot_description_ros_name = "robot_description",
+				   const std::string& root_link_ros_name = "root_link",
+				   const std::string& tip_link_ros_name = "tip_link");
 
     sensor_msgs::JointState initJointStateFromKDLCHain(const KDL::Chain& kdl_chain);
 

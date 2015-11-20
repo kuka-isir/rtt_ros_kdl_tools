@@ -40,6 +40,8 @@
   <run_depend>trajectory_msgs</run_depend>
   <run_depend>rtt_rosparam</run_depend>
 
+	<test_depend>rosunit</test_depend>
+
   <export>
     <rtt_ros>
       <plugin_depend>rtt_rosclock</plugin_depend>
