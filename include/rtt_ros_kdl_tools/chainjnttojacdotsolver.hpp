@@ -1,5 +1,5 @@
 /*
-    Computes the Jacobian time derivative in the hybrid representation
+    Computes the Jacobian time derivative
     Copyright (C) 2015  Antoine Hoarau <hoarau [at] isir.upmc.fr>
 
     This library is free software; you can redistribute it and/or
@@ -37,7 +37,8 @@ class ChainJntToJacDotSolver : public SolverI
 {
 /*
  * Computes the Jacobian time derivative (Jdot) by calculating the partial derivatives
- * regarding to a joint angle, in the "Hybrid" representation. This is based on : 
+ * regarding to a joint angle, in the Hybrid, Body-fixed or Inertial representation. 
+ * This work is based on : 
  * 
  * Symbolic differentiation of the velocity mapping for a serial kinematic chain
  * H. Bruyninckx, J. De Schutter
@@ -48,9 +49,11 @@ class ChainJntToJacDotSolver : public SolverI
 public:
     static const int E_JAC_DOT_FAILED= -100;
     
-    // The 3 representations for Jdot
+    // Hybrid representation ref Frame: base, ref Point: end-effector
     static const int HYBRID = 0;
+    // Body-fixed representation ref Frame: end-effector, ref Point: end-effector
     static const int BODYFIXED = 1;
+    // Intertial representation ref Frame: base, ref Point: base
     static const int INTERTIAL = 2;
     
     explicit ChainJntToJacDotSolver(const Chain& chain);
