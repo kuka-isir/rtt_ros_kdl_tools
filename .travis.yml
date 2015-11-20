@@ -35,7 +35,5 @@ script:
   #- catkin config --install
   # Build [and Install] packages
   - catkin build --limit-status-rate 0.1 --no-notify -DCMAKE_BUILD_TYPE=Release
-  # Build tests
-  - catkin build --limit-status-rate 0.1 --no-notify --make-args tests
   # Run tests
-  - catkin run_tests
+  - catkin run_tests_rtt_ros_kdl_tools_gtest_test_jdot
