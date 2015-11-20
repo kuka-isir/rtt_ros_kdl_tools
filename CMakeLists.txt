@@ -21,8 +21,6 @@ find_package(OROCOS-RTT)
 
 if(OROCOS-RTT_FOUND)
     include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
-else()
-    message(WARNING "OROCOS not found, compiling with NO_OROCOS flag")
 endif()
 
 catkin_package(INCLUDE_DIRS include)
@@ -66,15 +64,14 @@ if(OROCOS-RTT_FOUND)
     )
     
 else()
-  
+  message(WARNING "OROCOS not found, compiling with NO_OROCOS flag")
   set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY COMPILE_DEFINITIONS NO_OROCOS)
-
 endif()
 
 if(CATKIN_ENABLE_TESTING)
     catkin_add_gtest(test_jdot tests/test_jdot.cpp src/chainjnttojacdotsolver.cpp)
-    target_link_libraries(test_jdot ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+    target_link_libraries(test_jdot ${orocos_kdl_LIBRARIES})
     
-    catkin_add_gtest(test_chain_utils tests/test_chain_utils.cpp src/chain_utils.cpp src/tools.cpp src/chainjnttojacdotsolver.cpp)
-    target_link_libraries(test_chain_utils ${catkin_LIBRARIES})
+    catkin_add_gtest(test_chain_utils tests/test_chain_utils.cpp src/chain_utils.cpp)
+    target_link_libraries(test_chain_utils ${catkin_LIBRARIES} ${PROJECT_NAME})
 endif()
