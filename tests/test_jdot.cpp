@@ -8,13 +8,12 @@
 #include <rtt_ros_kdl_tools/chainjnttojacdotsolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
-#include <kdl/chainfksolvervel_recursive.hpp>
 #include <gtest/gtest.h>
 
 namespace KDL{
         static const double L0 = 1.0;
         static const double L1 = 0.5;
-        static const double L2 = 400;
+        static const double L2 = 0.4;
         static const double L3 = 0;
         static const double L4 = 0;
         static const double L5 = 0;
@@ -95,6 +94,22 @@ namespace KDL{
 using namespace KDL;
 using namespace std;
 
+void changeRepresentation(Jacobian& J,const Frame& F_bs_ee,const unsigned int& representation)
+{
+    switch(representation)
+    {
+        case ChainJntToJacDotSolver::HYBRID:
+            break;
+        case ChainJntToJacDotSolver::BODYFIXED:
+            // Ref Frame {ee}, Ref Point {ee}
+            J.changeBase(F_bs_ee.M.Inverse());
+            break;
+        case ChainJntToJacDotSolver::INTERTIAL:
+            // Ref Frame {bs}, Ref Point {bs}
+            J.changeRefPoint(-F_bs_ee.p);
+            break;
+    }
+}
 void Jdot_diff(const Jacobian& J_q,
                      const Jacobian& J_qdt,
                      const double& dt,
@@ -144,7 +159,7 @@ void random(JntArray& q)
         random(q(i));
 }
 
-double compare_Jdot_Diff_vs_Solver(const Chain& chain,const double& dt,bool verbose)
+double compare_Jdot_Diff_vs_Solver(const Chain& chain,const double& dt,const unsigned int& representation,bool verbose)
 {
     JntArray q(chain.getNrOfJoints());
     JntArray qdot(chain.getNrOfJoints());
@@ -157,17 +172,26 @@ double compare_Jdot_Diff_vs_Solver(const Chain& chain,const double& dt,bool verb
     
     ChainJntToJacDotSolver jdot_solver(chain);
     ChainJntToJacSolver j_solver(chain);
+    ChainFkSolverPos_recursive fk_solver(chain);
 
+    Frame F_bs_ee_q,F_bs_ee_q_dqdt;
     Jacobian jac_q(chain.getNrOfJoints()),
                 jac_q_dqdt(chain.getNrOfJoints()),
                 jdot_by_diff(chain.getNrOfJoints());
                 
     j_solver.JntToJac(q,jac_q);
     j_solver.JntToJac(q_dqdt,jac_q_dqdt);  
-
+    
+    fk_solver.JntToCart(q,F_bs_ee_q);
+    fk_solver.JntToCart(q_dqdt,F_bs_ee_q_dqdt);
+    
+    changeRepresentation(jac_q,F_bs_ee_q,representation);
+    changeRepresentation(jac_q_dqdt,F_bs_ee_q_dqdt,representation);
+    
     Jdot_diff(jac_q,jac_q_dqdt,dt,jdot_by_diff);
 
     Jacobian jdot_by_solver(chain.getNrOfJoints());
+    jdot_solver.setRepresentation(representation);
     jdot_solver.JntToJacDot(JntArrayVel(q_dqdt,qdot),jdot_by_solver);
 
     Twist jdot_qdot_by_solver;
@@ -219,77 +243,90 @@ double compare_d2_Jdot_Symbolic_vs_Solver(bool verbose)
     return std::abs(err);    
 }
 
-
-TEST(TestJdot, testDiff){
+bool runTest(const Chain& chain,const unsigned int& representation)
+{
     bool success=true;
     bool verbose = false;
-    double err_d2,err_d6,err_kuka;
+    double err;
     bool print_err = false;
     
-    for(double dt=1e-6;dt<1.0;dt*=10)
+    for(double dt=1e-6;dt<0.1;dt*=10)
     {
-            double eps_diff_vs_solver = 3.0*dt; // Apparently :)
-            double eps_sym_vs_solver = 1e-10;
             
+            double eps_diff_vs_solver = 3.0*dt; // Apparently :)
+
             for(int i=0;i<100;i++)
             {
-                err_d2 =        compare_Jdot_Diff_vs_Solver(d2(),dt,verbose);
-                err_d6 =        compare_Jdot_Diff_vs_Solver(d6(),dt,verbose);
-                err_kuka =      compare_Jdot_Diff_vs_Solver(KukaLWR_DHnew(),dt,verbose);
-                
-                success &= err_d2<=eps_diff_vs_solver;
-                success &= err_d6<=eps_diff_vs_solver;
-                success &= err_kuka<=eps_diff_vs_solver;
+                err = compare_Jdot_Diff_vs_Solver(chain,dt,representation,verbose);
+
+                success &= err<=eps_diff_vs_solver;
                 
                 if(!success || print_err){
-                    std::cout <<"dt:"<< dt<<" err_d2:"<<setw(12)<<err_d2
-                    <<" err_d6:"<<setw(12)<<err_d6
-                    <<" err_kuka:"<<setw(12)<<err_kuka
+                    std::cout<<" dt:"<< dt<<" err:"<<setw(12)<<err
                     <<" eps_diff_vs_solver:"<<eps_diff_vs_solver
-                    <<"eps_sym_vs_solver:"<<eps_sym_vs_solver<<std::endl;
+                    <<std::endl;
                     if(!success)
                     break;
                 }
                     
             }
     }
-    
-    if(!success)
-        std::cerr << "Jdot tests Failed" << std::endl;
-    else std::cout << "Jdot tests succeded" << std::endl;
-    EXPECT_TRUE(success);
+
+    return success;
 }
 
-TEST(TestJdot, testSymbolic){
+TEST(TestJdotHybrid, testD2DiffHybrid){
+    EXPECT_TRUE(runTest(d2(),ChainJntToJacDotSolver::HYBRID));
+}
+TEST(TestJdotHybrid, testD6DiffHybrid){
+    EXPECT_TRUE(runTest(d6(),ChainJntToJacDotSolver::HYBRID));
+}
+TEST(TestJdotHybrid, testKukaDiffHybrid){
+    EXPECT_TRUE(runTest(KukaLWR_DHnew(),ChainJntToJacDotSolver::HYBRID));
+}
+
+TEST(TestJdotIntertial, testD2DiffInertial){
+    EXPECT_TRUE(runTest(d2(),ChainJntToJacDotSolver::INTERTIAL));
+}
+TEST(TestJdotIntertial, testD6DiffInertial){
+    EXPECT_TRUE(runTest(d6(),ChainJntToJacDotSolver::INTERTIAL));
+}
+TEST(TestJdotIntertial, testKukaDiffInertial){
+    EXPECT_TRUE(runTest(KukaLWR_DHnew(),ChainJntToJacDotSolver::INTERTIAL));
+}
+TEST(TestJdotBodyFixed, testD2DiffBodyFixed){
+    EXPECT_TRUE(runTest(d2(),ChainJntToJacDotSolver::BODYFIXED));
+}
+TEST(TestJdotBodyFixed, testD6DiffBodyFixed){
+    EXPECT_TRUE(runTest(d6(),ChainJntToJacDotSolver::BODYFIXED));
+}
+TEST(TestJdotBodyFixed, testKukaDiffBodyFixed){
+    EXPECT_TRUE(runTest(KukaLWR_DHnew(),ChainJntToJacDotSolver::BODYFIXED));
+}
+
+TEST(TestJdotSymbolic, testD2Symbolic){
     bool success=true;
     bool verbose = false;
     double err_d2_sym;
     bool print_err = false;
     
-    for(double dt=1e-6;dt<1.0;dt*=10)
+    double eps_sym_vs_solver = 1e-10;
+    
+    for(int i=0;i<100;i++)
     {
-            double eps_sym_vs_solver = 1e-10;
+        err_d2_sym =    compare_d2_Jdot_Symbolic_vs_Solver(verbose);
+        
+        success &= err_d2_sym<=eps_sym_vs_solver;
+        
+        if(!success || print_err){
+            std::cout <<" err_d2_sym:"<<setw(12)<<err_d2_sym
+            <<" eps_sym_vs_solver:"<<eps_sym_vs_solver<<std::endl;
+            if(!success)
+            break;
+        }
             
-            for(int i=0;i<100;i++)
-            {
-                err_d2_sym =    compare_d2_Jdot_Symbolic_vs_Solver(verbose);
-                
-                success &= err_d2_sym<=eps_sym_vs_solver;
-                
-                if(!success || print_err){
-                    std::cout <<"dt:"<< dt
-                    <<" err_d2_sym:"<<setw(12)<<err_d2_sym
-                    <<"eps_sym_vs_solver:"<<eps_sym_vs_solver<<std::endl;
-                    if(!success)
-                    break;
-                }
-                    
-            }
     }
     
-    if(!success)
-        std::cerr << "Jdot tests Failed" << std::endl;
-    else std::cout << "Jdot tests succeded" << std::endl;
     EXPECT_TRUE(success);
 }
 
