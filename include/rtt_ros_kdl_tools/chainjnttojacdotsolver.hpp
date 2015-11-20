@@ -69,7 +69,7 @@ public:
      * 
      * @param q_in Current joint positions and velocities
      * @param jdot The jacobian time derivative in Hybrid representation 
-     * (i.e. with the base frame as the reference frame and the end effector frame 
+     *        (i.e. with the base frame as the reference frame and the end effector frame 
      * as the velocity reference frame 
      * @param seg_nr The final segment to compute
      * @return int 0 if no errors happened
@@ -77,18 +77,40 @@ public:
     virtual int JntToJacDot(const KDL::JntArrayVel& q_in, KDL::Jacobian& jdot, int seg_nr = -1);
     int setLockedJoints(const std::vector<bool> locked_joints);
     
+    /**
+     * @brief JntToJacDot() will compute in the Hybrid representation (ref Frame: base, ref Point: end-effector)
+     * 
+     * 
+     * @return void
+     */
     void setHybridRepresentation(){setRepresentation(HYBRID);}
+    /**
+     * @brief JntToJacDot() will compute in the Body-fixed representation (ref Frame: end-effector, ref Point: end-effector)
+     * 
+     * @return void
+     */
     void setBodyFixedRepresentation(){setRepresentation(BODYFIXED);}
+    /**
+     * @brief JntToJacDot() will compute in the Inertial representation (ref Frame: base, ref Point: base)
+     * 
+     * @return void
+     */
     void setInternialRepresentation(){setRepresentation(INTERTIAL);}
+    /**
+     * @brief Sets the internal variable for the representation (with a check on the value)
+     * 
+     * @param representation The representation for Jdot : HYBRID,BODYFIXED or INTERTIAL
+     * @return void
+     */
     void setRepresentation(const unsigned int& representation);
     
     /// @copydoc KDL::SolverI::strError()
     virtual const char* strError(const int error) const;
 protected:
-        /**
-     * @brief Computes \f$ \frac{\partial J^{i,ee}}{\partial q^{j}}.\dot{q}^{j} \f$
+     /**
+     * @brief Computes \f$ \frac{\partial {}_{bs}J^{i,ee}}{\partial q^{j}}.\dot{q}^{j} \f$
      * 
-     * @param bs_J_ee The Jacobian expressed in the base frame with the end effector as reference point (default in KDL Jacobian Solver)
+     * @param bs_J_ee The Jacobian expressed in the base frame with the end effector as the reference point (default in KDL Jacobian Solver)
      * @param joint_idx The indice of the current joint (j in the formula)
      * @param column_idx The indice of the current column (i in the formula)
      * @return Twist The twist representing dJi/dqj .qdotj
@@ -96,15 +118,37 @@ protected:
     const Twist& getPartialDerivativeHybrid(const Jacobian& bs_J_ee,
                                      const unsigned int& joint_idx,
                                      const unsigned int& column_idx);
-    
+     /**
+     * @brief Computes \f$ \frac{\partial {}_{ee}J^{i,ee}}{\partial q^{j}}.\dot{q}^{j} \f$
+     * 
+     * @param bs_J_ee The Jacobian expressed in the end effector frame with the end effector as the reference point
+     * @param joint_idx The indice of the current joint (j in the formula)
+     * @param column_idx The indice of the current column (i in the formula)
+     * @return Twist The twist representing dJi/dqj .qdotj
+     */    
     const Twist& getPartialDerivativeBodyFixed(const Jacobian& ee_J_ee,
                                         const unsigned int& joint_idx,
                                         const unsigned int& column_idx);
-    
+     /**
+     * @brief Computes \f$ \frac{\partial {}_{bs}J^{i,bs}}{\partial q^{j}}.\dot{q}^{j} \f$
+     * 
+     * @param ee_J_ee The Jacobian expressed in the base frame with the base as the reference point
+     * @param joint_idx The indice of the current joint (j in the formula)
+     * @param column_idx The indice of the current column (i in the formula)
+     * @return Twist The twist representing dJi/dqj .qdotj
+     */    
     const Twist& getPartialDerivativeInertial(const Jacobian& bs_J_bs,
                                        const unsigned int& joint_idx,
                                        const unsigned int& column_idx);
-    
+     /**
+     * @brief Computes \f$ \frac{\partial J^{i,ee}}{\partial q^{j}}.\dot{q}^{j} \f$
+     * 
+     * @param bs_J_bs The Jacobian expressed in the base frame with the end effector as the reference point
+     * @param joint_idx The indice of the current joint (j in the formula)
+     * @param column_idx The indice of the current column (i in the formula)
+     * @param representation The representation (Hybrid,Body-fixed,Inertial) in which you want to get dJ/dqj .qdotj 
+     * @return Twist The twist representing dJi/dqj .qdotj
+     */    
     const Twist& getPartialDerivative(const Jacobian& J,
                                const unsigned int& joint_idx,
                                const unsigned int& column_idx,
