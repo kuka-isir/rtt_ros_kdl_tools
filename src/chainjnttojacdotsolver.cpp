@@ -1,5 +1,5 @@
 /*
-    Computes the Jacobian time derivative in the hybrid representation
+    Computes the Jacobian time derivative
     Copyright (C) 2015  Antoine Hoarau <hoarau [at] isir.upmc.fr>
 
     This library is free software; you can redistribute it and/or
@@ -21,9 +21,9 @@
 #include "rtt_ros_kdl_tools/chainjnttojacdotsolver.hpp"
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
-#include <kdl/kinfam_io.hpp>
-#include <kdl/frames_io.hpp>
-#include <kdl/framevel_io.hpp>
+//#include <kdl/kinfam_io.hpp>
+//#include <kdl/frames_io.hpp>
+//#include <kdl/framevel_io.hpp>
 
 namespace KDL
 {
