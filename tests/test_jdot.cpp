@@ -33,6 +33,7 @@ namespace KDL{
         d6.addSegment(Segment(Joint(Joint::RotZ),Frame(Vector(L5,0,0))));
         return d6;
     }
+    // Taken from https://github.com/orocos/orocos_kinematics_dynamics/blob/master/orocos_kdl/models/kukaLWR_DHnew.cpp
     Chain KukaLWR_DHnew(){
         Chain kukaLWR_DHnew;
         
