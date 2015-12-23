@@ -31,6 +31,13 @@
 
 #include <sensor_msgs/JointState.h>
 
+#define TORAD 3.141592653589793/180.0
+
+template<typename T> inline T clamp(const T& x, const T& a, const T& b)
+{
+    return x < a ? a : (x > b ? b : x);
+}
+
 namespace rtt_ros_kdl_tools{
     
     bool initChainFromString(const std::string& robot_description,
