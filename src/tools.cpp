@@ -96,9 +96,9 @@ bool initChainFromROSParamURDF(RTT::TaskContext* task,
     }
     
     if(!rosparam->getParam(root_link_ros_name,root_link_rtt_name))
-        RTT::log(RTT::Warning) << root_link_ros_name<<" not provided, using default : " << root_link_rtt_name <<RTT::endlog();
+        RTT::log(RTT::Debug) << root_link_ros_name<<" param name not provided, using default : " << root_link_rtt_name <<RTT::endlog();
     if(!rosparam->getParam(tip_link_ros_name,tip_link_rtt_name))
-        RTT::log(RTT::Warning) << tip_link_ros_name<<" not provided, using default : " << tip_link_rtt_name <<RTT::endlog();
+        RTT::log(RTT::Debug) << tip_link_ros_name<<" param name not provided, using default : " << tip_link_rtt_name <<RTT::endlog();
     
     RTT::Property<std::string> root_link = task->getProperty(root_link_rtt_name);
     RTT::Property<std::string> tip_link = task->getProperty(tip_link_rtt_name);
