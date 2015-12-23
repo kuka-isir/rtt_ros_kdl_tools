@@ -1,29 +1,32 @@
 #include "rtt_ros_kdl_tools/chain_utils.hpp"
 
 namespace rtt_ros_kdl_tools{
-  
-  ChainUtils::ChainUtils(const std::string& robot_description_name, const std::string& root_link_name, const std::string& tip_link_name ){
+
+  ChainUtils::ChainUtils(const std::string& robot_description_name,
+                         const std::string& root_link_name,
+                         const std::string& tip_link_name,
+                         const KDL::Vector gravity_vector = KDL::Vector(0.,0.,-9.81)){
     rtt_ros_kdl_tools::initChainFromROSParamURDF(kdl_tree_, kdl_chain_);
     rtt_ros_kdl_tools::readJntLimitsFromROSParamURDF(joints_name_, joints_lower_limit_, joints_upper_limit_, kdl_tree_, kdl_chain_, robot_description_name, root_link_name, tip_link_name);
-    
+
     ros::NodeHandle nh("");
     nh.getParam(root_link_name, root_link_);
     nh.getParam(tip_link_name, tip_link_);
-    
+
     q_.resize(kdl_chain_.getNrOfJoints());
     qd_.resize(kdl_chain_.getNrOfJoints());
     massMatrix_.resize(kdl_chain_.getNrOfJoints());
     gravityTorque_.resize(kdl_chain_.getNrOfJoints());
     corioCentriTorque_.resize(kdl_chain_.getNrOfJoints());
-    
+
     chainjacsolver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
     fksolver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
     fksolvervel_.reset(new KDL::ChainFkSolverVel_recursive(kdl_chain_));
-    dynModelSolver_.reset(new KDL::ChainDynParam(kdl_chain_, KDL::Vector(0.,0.,-9.81)));
+    dynModelSolver_.reset(new KDL::ChainDynParam(kdl_chain_, gravity_vector));
     jntToJacDotSolver_.reset(new KDL::ChainJntToJacDotSolver(kdl_chain_));
-    
+
     outdate();
-  }  
+  }
 
   void ChainUtils::printChain(){
     if(kdl_chain_.getNrOfSegments() == 0)
@@ -36,12 +39,12 @@ namespace rtt_ros_kdl_tools{
 
     for(unsigned int i=0;i<kdl_chain_.getNrOfSegments();++i)
       ROS_INFO_STREAM("    "<<kdl_chain_.getSegment(i).getName());
-    
+
     ROS_INFO_STREAM(joints_name_.size()<<" joints limited :");
     for(int i=0; i<joints_name_.size(); i++)
       ROS_INFO_STREAM("  Joint "<<joints_name_[i]<<" has limits "<<joints_lower_limit_[i]<<" and "<< joints_upper_limit_[i]);
   }
-  
+
   int ChainUtils::nbSegments(){
     return kdl_chain_.getNrOfSegments();
   }
@@ -185,15 +188,15 @@ namespace rtt_ros_kdl_tools{
   // TODO
   //   KDL::Jacobian j(kdl_tree_.getNrOfJoints());
   //   treejacsolver_->JntToJac(q_, j, "06");
-  // 
+  //
   //   KDL::Wrench w = W_ext_.RefPoint(-W_ext_point_);
   //     Eigen::Vector3d f,t;
-  //       
+  //
   //   for(unsigned int i=0;i<3;i++){
   //     f(i) = w.force.data[i];
   //     t(i) = w.torque.data[i];
   //   }
-  //   
+  //
   //   externalWrenchTorque_.data = j.data.transpose().block(0,0,7,3) * f + j.data.transpose().block(0,3,7,3) * t;
   // }
 
