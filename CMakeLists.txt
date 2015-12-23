@@ -23,7 +23,7 @@ if(OROCOS-RTT_FOUND)
     include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 endif()
 
-catkin_package(INCLUDE_DIRS include)
+#catkin_package(INCLUDE_DIRS include)
 
 include_directories(
   include
@@ -53,16 +53,19 @@ target_link_libraries(${PROJECT_NAME}
 if(OROCOS-RTT_FOUND)
 
   set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY COMPILE_DEFINITIONS RTT_COMPONENT)
-  
-  orocos_install_headers(DIRECTORY
-    include/${PROJECT_NAME}
-    )
 
   orocos_generate_package(
     INCLUDE_DIRS include
     DEPENDS rtt_rosclock rtt_rosparam
     )
-    
+
+  orocos_install_headers(  
+    include/${PROJECT_NAME}/tools.hpp
+    include/${PROJECT_NAME}/chainjnttojacdotsolver.hpp
+    include/${PROJECT_NAME}/chain_utils.hpp
+    include/${PROJECT_NAME}/mqueue_connpolicy.hpp
+    )
+
 else()
   message(WARNING "OROCOS not found, compiling with NO_OROCOS flag")
   set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY COMPILE_DEFINITIONS NO_OROCOS)
