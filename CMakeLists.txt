@@ -21,6 +21,8 @@ find_package(OROCOS-RTT)
 
 if(OROCOS-RTT_FOUND)
     include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
+    orocos_use_package(rtt_roscomm)
+    orocos_use_package(rtt_rosparam)
 endif()
 
 #catkin_package(INCLUDE_DIRS include)
@@ -59,7 +61,7 @@ if(OROCOS-RTT_FOUND)
     DEPENDS rtt_rosclock rtt_rosparam
     )
 
-  orocos_install_headers(  
+  orocos_install_headers(
     include/${PROJECT_NAME}/tools.hpp
     include/${PROJECT_NAME}/chainjnttojacdotsolver.hpp
     include/${PROJECT_NAME}/chain_utils.hpp
@@ -74,7 +76,7 @@ endif()
 if(CATKIN_ENABLE_TESTING)
     catkin_add_gtest(test_jdot tests/test_jdot.cpp src/chainjnttojacdotsolver.cpp)
     target_link_libraries(test_jdot ${orocos_kdl_LIBRARIES})
-    
+
     catkin_add_gtest(test_chain_utils tests/test_chain_utils.cpp src/chain_utils.cpp)
     target_link_libraries(test_chain_utils ${catkin_LIBRARIES} ${PROJECT_NAME})
 endif()
