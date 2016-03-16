@@ -37,13 +37,18 @@ include_directories(
 if(OROCOS-RTT_FOUND)
   orocos_library(${PROJECT_NAME}
     src/tools.cpp
+    src/chaincogsolver.cpp
     src/chainjnttojacdotsolver.cpp
+    src/chain_utils.cpp
     )
 else()
   add_library(${PROJECT_NAME}
     src/tools.cpp
+    src/chaincogsolver.cpp
     src/chainjnttojacdotsolver.cpp
+    src/chain_utils.cpp
     )
+  
 endif()
 
 target_link_libraries(${PROJECT_NAME}
@@ -66,6 +71,7 @@ if(OROCOS-RTT_FOUND)
     include/${PROJECT_NAME}/chainjnttojacdotsolver.hpp
     include/${PROJECT_NAME}/chain_utils.hpp
     include/${PROJECT_NAME}/mqueue_connpolicy.hpp
+    include/${PROJECT_NAME}/chaincogsolver.hpp
     )
 
 else()
