@@ -30,15 +30,15 @@
 namespace KDL
 {
     
-class ChainCOGSolver : public SolverI
+class ChainCoGSolver : public SolverI
 {
 
 public:
     static const int E_COG_FAILED= -100;
     
-    explicit ChainCOGSolver(const Chain& chain);
-    virtual ~ChainCOGSolver();
-    int JntToCOG(const JntArray& q_in,Vector& center_of_mass_out, int seg_nr=-1);
+    explicit ChainCoGSolver(const Chain& chain);
+    virtual ~ChainCoGSolver();
+    int JntToCoG(const JntArray& q_in,Vector& center_of_mass_out, int seg_nr=-1);
 
 private:
     
