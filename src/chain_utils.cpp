@@ -36,6 +36,9 @@ bool ChainUtils::init()
         return false;
     }
 
+    for(int i=0;i<kdl_chain_.getNrOfSegments();i++)
+        seg_names_idx_.add(kdl_chain_.getSegment(i).getName(),i);
+    
     q_.resize(kdl_chain_.getNrOfJoints());
     qd_.resize(kdl_chain_.getNrOfJoints());
     qqd_.resize(kdl_chain_.getNrOfJoints());
@@ -46,6 +49,7 @@ bool ChainUtils::init()
     corioCentriTorque_.resize(kdl_chain_.getNrOfJoints());
     jacobian_.resize(kdl_chain_.getNrOfJoints());
     seg_jacobian_.resize(kdl_chain_.getNrOfJoints());
+    seg_jacobian_dot_.resize(kdl_chain_.getNrOfJoints());
 
     chainjacsolver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
     fksolver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
@@ -87,7 +91,7 @@ const KDL::Segment& ChainUtils::getSegment(unsigned int segment) {
 }
 
 KDL::Frame& ChainUtils::getSegmentPosition(unsigned int segment) {
-    fksolver_->JntToCart(q_, seg_pos_, segment);
+    fksolver_->JntToCart(q_, seg_pos_, segment+1);
     return seg_pos_;
 }
 
@@ -96,7 +100,7 @@ KDL::Frame& ChainUtils::getSegmentPosition(std::string& segment_name) {
 }
 
 KDL::Twist& ChainUtils::getSegmentVelocity(unsigned int segment) {
-    fksolvervel_->JntToCart(qqd_, frame_vel_, segment);
+    fksolvervel_->JntToCart(qqd_, frame_vel_, segment+1);
     seg_vel_ = frame_vel_.GetTwist();
     return seg_vel_;
 }
@@ -106,7 +110,7 @@ KDL::Twist& ChainUtils::getSegmentVelocity(std::string& segment_name) {
 }
 
 KDL::Jacobian& ChainUtils::getSegmentJacobian(unsigned int segment) {
-    chainjacsolver_->JntToJac(q_, seg_jacobian_, segment);
+    chainjacsolver_->JntToJac(q_, seg_jacobian_, segment+1);
     return seg_jacobian_;
 }
 KDL::Jacobian& ChainUtils::getJacobian()
@@ -154,8 +158,17 @@ KDL::Twist& ChainUtils::getSegmentJdotQdot(const std::string& segment_name) {
 }
 
 KDL::Twist& ChainUtils::getSegmentJdotQdot(unsigned int segment) {
-    jntToJacDotSolver_->JntToJacDot(qqd_, seg_jdot_qdot_, segment);
+    jntToJacDotSolver_->JntToJacDot(qqd_, seg_jdot_qdot_, segment+1);
     return seg_jdot_qdot_;
+}
+KDL::Jacobian& ChainUtils::getSegmentJdot(const std::string& segment_name)
+{
+    return getSegmentJdot(getSegmentIndex(segment_name));
+}
+KDL::Jacobian& ChainUtils::getSegmentJdot(unsigned int segment)
+{
+    jntToJacDotSolver_->JntToJacDot(qqd_,seg_jacobian_dot_,segment+1);
+    return seg_jacobian_dot_;
 }
 
 KDL::JntSpaceInertiaMatrix& ChainUtils::getInertiaMatrix() {
@@ -211,8 +224,18 @@ void ChainUtils::computeJdotQdot()
 {
     jntToJacDotSolver_->JntToJacDot(qqd_, jdot_qdot_);
 }
-void ChainUtils::computeInertiaMatrix() {
+void ChainUtils::computeInertiaMatrix()
+{
     dynModelSolver_->JntToMass(q_,massMatrix_);
+}
+KDL::RotationalInertia& ChainUtils::getSegmentInertiaMatrix(unsigned int seg_idx)
+{
+    rot_intertia = this->Chain().getSegment(seg_idx).getInertia().getRotationalInertia();
+    return rot_intertia;
+}
+KDL::RotationalInertia& ChainUtils::getSegmentInertiaMatrix(const std::string& seg_name)
+{
+    return getSegmentInertiaMatrix(getSegmentIndex(seg_name));
 }
 
 void ChainUtils::computeCorioCentriTorque() {

@@ -16,6 +16,7 @@
 
 namespace rtt_ros_kdl_tools{
   class SegmentIndice{
+    /* This class is used to bind segment names to the index in the chain */
     public: const int operator()(const std::string& segment_name)
     {
         return this->operator[](segment_name);
@@ -23,22 +24,25 @@ namespace rtt_ros_kdl_tools{
     public: const int operator[](const std::string& segment_name)
     {
         if(seg_idx_names.empty())
+        {
+            std::cerr << "Segment idx is empty ! "<< std::endl;
             return -1;
+        }
         if(seg_idx_names[segment_name])
             return seg_idx_names[segment_name];
         else{
-            std::map<std::string,int>::iterator it;
-            it = seg_idx_names.end();
-            it--;
-            std::cerr << "Segment name ["<<segment_name<<"] does not exists, returning last element in map ["<<it->second<<"]" << std::endl;
-            return it->second;
+            int last_index = seg_idx[seg_idx.size()-1];
+            std::cerr << "Segment name ["<<segment_name<<"] does not exists, returning last element in map ["<<last_index<<"]" << std::endl;
+            return last_index;
         }
     }
     public: void add(const std::string& seg_name,int i)
     {
         seg_idx_names[seg_name] = i;
+        seg_idx.push_back(i);
     }
     protected : std::map<std::string,int> seg_idx_names;
+    protected : std::vector<int> seg_idx;
   };
 
   class ChainUtils{
@@ -191,6 +195,8 @@ namespace rtt_ros_kdl_tools{
       KDL::Jacobian & getJacobian();
       KDL::Twist& getSegmentJdotQdot(unsigned int segment);
       KDL::Twist& getSegmentJdotQdot(const std::string& segment_name);
+      KDL::Jacobian& getSegmentJdot(const std::string& segment_name);
+      KDL::Jacobian& getSegmentJdot(unsigned int index);
       const std::string& getSegmentName(unsigned int index);
 
       /**
@@ -293,7 +299,11 @@ namespace rtt_ros_kdl_tools{
 	* @brief Computes the mass matrix of the model.
 	*/
       void computeInertiaMatrix();
-
+      /**
+        * @brief Computes the mass matrix of the model.
+        */
+      KDL::RotationalInertia& getSegmentInertiaMatrix(const std::string& seg_name);
+      KDL::RotationalInertia& getSegmentInertiaMatrix(unsigned int seg_idx);
       /**
 	* @brief Computes the Coriolis, centrifugal and gravity induced joint torque of the model.
 	*/
@@ -334,7 +344,7 @@ namespace rtt_ros_kdl_tools{
       void computeJacobian();
       void computeJdotQdot();
     private:
-      KDL::Jacobian jacobian_,seg_jacobian_;
+      KDL::Jacobian jacobian_,seg_jacobian_,seg_jacobian_dot_;
       KDL::JntArrayVel qqd_;
       KDL::Twist jdot_qdot_,seg_jdot_qdot_;
       KDL::Frame ee_pos_,seg_pos_;
@@ -420,6 +430,7 @@ namespace rtt_ros_kdl_tools{
         std::string root_link_name;
         std::string tip_link_name;
         KDL::Vector gravity_vector;
+        KDL::RotationalInertia rot_intertia;
   };
 
 }
