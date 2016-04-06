@@ -3,7 +3,8 @@
 namespace KDL{
 
 ChainCoGSolver::ChainCoGSolver(const KDL::Chain& chain_):
-chain(chain_)
+chain(chain_),
+jacobian_(chain.getNrOfJoints())
 {
 
 }
@@ -54,6 +55,14 @@ int ChainCoGSolver::JntToCoG(const KDL::JntArray& q_in, KDL::Vector& center_of_m
     }
     center_of_mass_out = 1.0/total_mass *  cog;
     return 0;
+}
+int ChainCoGSolver::JntToCoGJac(const JntArrayVel& q_qdot_in, Jacobian& center_of_mass_Jacobian_out, int seg_nr)
+{
+
+}
+int ChainCoGSolver::JntToCoGVel(const JntArrayVel& q_qdot_in, Vector& center_of_mass_vel_out, int seg_nr)
+{
+    
 }
 
 ChainCoGSolver::~ChainCoGSolver()
