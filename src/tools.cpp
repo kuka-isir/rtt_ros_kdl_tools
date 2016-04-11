@@ -298,5 +298,27 @@ bool initJointStateMsgFromString(const std::string& robot_description, sensor_ms
     return true;
 }
 
+bool getAllPropertiesFromROSParam(RTT::TaskContext* _this)
+{
+    // Get RosParameters if available
+    boost::shared_ptr<rtt_rosparam::ROSParam> rosparam =
+        _this->getProvider<rtt_rosparam::ROSParam>("rosparam");
+
+    if(rosparam) {
+        const RTT::PropertyBag::Properties &properties =  _this->properties()->getProperties();
+        for(RTT::PropertyBag::Properties::const_iterator it = properties.begin();
+            it != properties.end();++it)
+        {
+            if(rosparam->getParam(_this->getName() +"/"+(*it)->getName(),(*it)->getName()))
+                RTT::log(RTT::Info) << _this->getName() +"/"+(*it)->getName() << " => "<< _this->getProperty((*it)->getName())<< RTT::endlog();
+            else
+                RTT::log(RTT::Info) << "No param found for "<<_this->getName() +"/"+(*it)->getName()<< RTT::endlog();
+        }
+    }else{
+        RTT::log(RTT::Error) << "ROS Param could not be loaded "<< RTT::endlog();
+        return false;
+    }
+    return true;
+}
 
 }

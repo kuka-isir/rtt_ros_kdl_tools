@@ -26,6 +26,8 @@
 #include <kdl/jntarray.hpp>
 #include <kdl/chain.hpp>
 #include <kdl/frames.hpp>
+#include <kdl/jacobian.hpp>
+#include <kdl/jntarrayvel.hpp>
 
 namespace KDL
 {
@@ -39,6 +41,8 @@ public:
     explicit ChainCoGSolver(const Chain& chain);
     virtual ~ChainCoGSolver();
     int JntToCoG(const JntArray& q_in,Vector& center_of_mass_out, int seg_nr=-1);
+    int JntToCoGJac(const JntArrayVel& q_qdot_in,KDL::Jacobian& center_of_mass_Jacobian_out, int seg_nr=-1);
+    int JntToCoGVel(const JntArrayVel& q_qdot_in,KDL::Vector& center_of_mass_vel_out, int seg_nr=-1);
 
 private:
     
@@ -46,6 +50,8 @@ private:
     std::vector<bool> locked_joints_;
     Vector cog;
     Frame pos;
+    Jacobian jacobian_;
+    Vector cog_vel;
 };
 
 }
