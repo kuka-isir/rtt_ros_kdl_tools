@@ -74,7 +74,7 @@ void printChain(const KDL::Chain& kdl_chain)
         ROS_WARN("KDL chain empty !");
     ROS_INFO("KDL chain from tree: ");
     if(kdl_chain.getNrOfSegments() > 0)
-        ROS_INFO_STREAM("  "<<kdl_chain.getSegment(0).getName()<<" --> "<<kdl_chain.getSegment(kdl_chain.getNrOfSegments()-1).getName());
+        ROS_INFO_STREAM("Root link :["<<kdl_chain.getSegment(0).getName()<<"] --> Tip Link :["<<kdl_chain.getSegment(kdl_chain.getNrOfSegments()-1).getName()<<"]");
     ROS_INFO_STREAM("  Chain has "<<kdl_chain.getNrOfJoints()<<" joints");
     ROS_INFO_STREAM("  Chain has "<<kdl_chain.getNrOfSegments()<<" segments");
 

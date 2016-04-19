@@ -38,7 +38,7 @@ bool ChainUtils::init()
 
     for(int i=0;i<kdl_chain_.getNrOfSegments();i++)
         seg_names_idx_.add(kdl_chain_.getSegment(i).getName(),i);
-    
+
     q_.resize(kdl_chain_.getNrOfJoints());
     qd_.resize(kdl_chain_.getNrOfJoints());
     qqd_.resize(kdl_chain_.getNrOfJoints());
@@ -62,16 +62,7 @@ bool ChainUtils::init()
 }
 
 void ChainUtils::printChain() {
-    if(kdl_chain_.getNrOfSegments() == 0)
-        ROS_WARN("KDL chain empty !");
-    ROS_INFO("KDL chain from tree: ");
-    if(kdl_chain_.getNrOfSegments() > 0)
-        ROS_INFO_STREAM("  root_link: "<<root_link_<<" --> tip_link: "<<tip_link_);
-    ROS_INFO_STREAM("  Chain has "<<kdl_chain_.getNrOfJoints()<<" joints");
-    ROS_INFO_STREAM("  Chain has "<<kdl_chain_.getNrOfSegments()<<" segments");
-
-    for(unsigned int i=0; i<kdl_chain_.getNrOfSegments(); ++i)
-        ROS_INFO_STREAM("    "<<kdl_chain_.getSegment(i).getName());
+    rtt_ros_kdl_tools::printChain(kdl_chain_);
 
     ROS_INFO_STREAM(joints_name_.size()<<" joints limited :");
     for(int i=0; i<joints_name_.size(); i++)
