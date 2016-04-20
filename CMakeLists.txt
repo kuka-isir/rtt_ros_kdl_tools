@@ -23,9 +23,8 @@ if(OROCOS-RTT_FOUND)
     include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
     orocos_use_package(rtt_roscomm)
     orocos_use_package(rtt_rosparam)
+    orocos_use_package(rtt_rosclock)
 endif()
-
-#catkin_package(INCLUDE_DIRS include)
 
 include_directories(
   include
@@ -41,23 +40,6 @@ if(OROCOS-RTT_FOUND)
     src/chainjnttojacdotsolver.cpp
     src/chain_utils.cpp
     )
-else()
-  add_library(${PROJECT_NAME}
-    src/tools.cpp
-    src/chaincogsolver.cpp
-    src/chainjnttojacdotsolver.cpp
-    src/chain_utils.cpp
-    )
-  
-endif()
-
-target_link_libraries(${PROJECT_NAME}
-   ${catkin_LIBRARIES}
-   ${orocos_kdl_LIBRARIES}
-   ${USE_OROCOS_LIBRARIES}
-)
-
-if(OROCOS-RTT_FOUND)
 
   set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY COMPILE_DEFINITIONS RTT_COMPONENT)
 
@@ -73,11 +55,25 @@ if(OROCOS-RTT_FOUND)
     include/${PROJECT_NAME}/mqueue_connpolicy.hpp
     include/${PROJECT_NAME}/chaincogsolver.hpp
     )
-
 else()
+  catkin_package(INCLUDE_DIRS include)
+
+  add_library(${PROJECT_NAME}
+    src/tools.cpp
+    src/chaincogsolver.cpp
+    src/chainjnttojacdotsolver.cpp
+    src/chain_utils.cpp
+    )
+
   message(WARNING "OROCOS not found, compiling with NO_OROCOS flag")
   set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY COMPILE_DEFINITIONS NO_OROCOS)
 endif()
+
+target_link_libraries(${PROJECT_NAME}
+   ${catkin_LIBRARIES}
+   ${orocos_kdl_LIBRARIES}
+   ${USE_OROCOS_LIBRARIES}
+)
 
 if(CATKIN_ENABLE_TESTING)
     catkin_add_gtest(test_jdot tests/test_jdot.cpp src/chainjnttojacdotsolver.cpp)
