@@ -5,7 +5,6 @@
 
 #include <rtt/RTT.hpp>
 #include <rtt/TaskContext.hpp>
-#include <rtt_rosclock/rtt_rosclock.h>
 
 #endif
 
