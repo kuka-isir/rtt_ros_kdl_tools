@@ -163,8 +163,13 @@ KDL::Jacobian& ChainUtils::getSegmentJdot(unsigned int segment)
 }
 
 KDL::JntSpaceInertiaMatrix& ChainUtils::getInertiaMatrix() {
-    return massMatrix_;
+	return massMatrix_;
 }
+
+KDL::JntSpaceInertiaMatrix& ChainUtils::getInertiaInverseMatrix() {
+	return massMatrixInv_;
+}
+
 
 KDL::JntArray& ChainUtils::getCoriolisTorque() {
     return corioCentriTorque_;
@@ -202,7 +207,8 @@ void ChainUtils::updateModel()
 {
     computeJdotQdot();
     computeGravityTorque();
-    computeInertiaMatrix();
+	computeInertiaMatrix();
+	inverseInertiaMatrix();
     computeCorioCentriTorque();
     computeJacobian();
 }
@@ -217,7 +223,11 @@ void ChainUtils::computeJdotQdot()
 }
 void ChainUtils::computeInertiaMatrix()
 {
-    dynModelSolver_->JntToMass(q_,massMatrix_);
+	dynModelSolver_->JntToMass(q_,massMatrix_);
+}
+void ChainUtils::inverseInertiaMatrix()
+{
+	massMatrixInv_.data = massMatrix_.data.inverse();
 }
 KDL::RotationalInertia& ChainUtils::getSegmentInertiaMatrix(unsigned int seg_idx)
 {
