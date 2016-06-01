@@ -37,7 +37,7 @@ bool initChainFromString(const std::string& robot_description,
         {
             // HACK: Setting pseudo fixed-joints to FIXED, so that KDL does not considers them.
             joint->second->type = urdf::Joint::FIXED;
-            ROS_WARN_STREAM("Removing fixed joint "<<joint->second->name<<std::endl);
+            ROS_INFO_STREAM("Removing fixed joint "<<joint->second->name<<std::endl);
         }
       }
     }
@@ -65,6 +65,7 @@ bool initChainFromString(const std::string& robot_description,
         ROS_ERROR("Failed to build the KDL chain with params :\n  root_link: [%s]\n  tip_link: [%s]",root_link.c_str(),tip_link.c_str());
         return false;
     }
+    ROS_INFO("Building KDL Chain from %s to %s => %d joints and %d segments",root_link.c_str(),tip_link.c_str(),kdl_chain.getNrOfJoints(),kdl_chain.getNrOfSegments());
     return true;
 }
 
@@ -72,9 +73,7 @@ void printChain(const KDL::Chain& kdl_chain)
 {
     if(kdl_chain.getNrOfSegments() == 0)
         ROS_WARN("KDL chain empty !");
-    ROS_INFO("KDL chain from tree: ");
-    if(kdl_chain.getNrOfSegments() > 0)
-        ROS_INFO_STREAM("Root link :["<<kdl_chain.getSegment(0).getName()<<"] --> Tip Link :["<<kdl_chain.getSegment(kdl_chain.getNrOfSegments()-1).getName()<<"]");
+    
     ROS_INFO_STREAM("  Chain has "<<kdl_chain.getNrOfJoints()<<" joints");
     ROS_INFO_STREAM("  Chain has "<<kdl_chain.getNrOfSegments()<<" segments");
 
@@ -279,7 +278,7 @@ bool initJointStateMsgFromString(const std::string& robot_description, sensor_ms
             if(j->second->limits->lower == j->second->limits->upper)
             {
                 // NOTE: Setting pseudo fixed-joints to FIXED, so that KDL does not considers them.
-                RTT::log(RTT::Debug) << "Removing fixed joint "<<j->second->name<<std::endl;
+                RTT::log(RTT::Info) << "Removing fixed joint "<<j->second->name<<std::endl;
                 continue;
             }
         }
