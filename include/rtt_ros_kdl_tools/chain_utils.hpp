@@ -14,6 +14,8 @@
 #include <rtt_ros_kdl_tools/chainjnttojacdotsolver.hpp>
 #include <ros/ros.h>
 
+#include <Eigen/Dense>
+
 namespace rtt_ros_kdl_tools{
   class SegmentIndice{
     /* This class is used to bind segment names to the index in the chain */
@@ -232,11 +234,17 @@ namespace rtt_ros_kdl_tools{
 	*/
       KDL::JntArray & getJointVelocities();
 
-      /**
-	* @brief Gives a kdl JntSpaceInertiaMatrix containing the mass matrix
-	* @param[out] massMatrix The mass matrix
-	*/
-      KDL::JntSpaceInertiaMatrix & getInertiaMatrix();
+	  /**
+	   * @brief Gives a kdl JntSpaceInertiaMatrix containing the mass matrix
+	   * @param[out] massMatrix The mass matrix
+	   */
+	  KDL::JntSpaceInertiaMatrix & getInertiaMatrix();
+	  
+	  /**
+	   * @brief Gives a kdl JntSpaceInertiaMatrix containing the inverse of the mass matrix
+	   * @return massInverseMatrix The inverse mass matrix
+	   */
+	  KDL::JntSpaceInertiaMatrix & getInertiaInverseMatrix();
 
       /**
 	* @brief Gives a kdl JntArray containing the Coriolis torque
@@ -299,6 +307,10 @@ namespace rtt_ros_kdl_tools{
 	* @brief Computes the mass matrix of the model.
 	*/
       void computeInertiaMatrix();
+	  /**
+	   * @brief Inverses the previously computed mass matrix of the model.
+	   */	  
+	  void inverseInertiaMatrix();
       /**
         * @brief Computes the mass matrix of the model.
         */
