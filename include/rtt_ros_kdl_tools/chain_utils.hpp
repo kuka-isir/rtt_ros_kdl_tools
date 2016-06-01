@@ -432,6 +432,7 @@ namespace rtt_ros_kdl_tools{
       bool cartPosOutdated_;
       bool cartVelOutdated_;
       bool isOutdated_;
+      bool is_initialized;
       bool isOutdated();
       /**
 	* @brief Sets the gravity torque, coriolis torque and inertia to outdated

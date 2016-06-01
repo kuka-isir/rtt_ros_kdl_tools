@@ -10,14 +10,22 @@ ChainUtils::ChainUtils(bool init_kdl_chains,
 robot_description_name(robot_description_name),
 root_link_name(root_link_name),
 tip_link_name(tip_link_name),
-gravity_vector(gravity_vector)
+gravity_vector(gravity_vector),
+is_initialized(false)
 {
 
     if(init_kdl_chains)
-        this->init();
+        is_initialized = this->init();
 }
 bool ChainUtils::init()
 {
+    if(is_initialized)
+    {
+        std::cerr << "Chain is already initialized if you use the default constructor()"<<std::endl;
+        std::cerr << "Maybe you called init() multiple times." <<std::endl;
+        return true;
+    }
+
     if(!rtt_ros_kdl_tools::initChainFromROSParamURDF(kdl_tree_, kdl_chain_))
     {
         std::cerr << "Error at rtt_ros_kdl_tools::initChainFromROSParamURDF" <<std::endl;
@@ -58,6 +66,7 @@ bool ChainUtils::init()
     jntToJacDotSolver_.reset(new KDL::ChainJntToJacDotSolver(kdl_chain_));
 
     outdate();
+    is_initialized = true;
     return true;
 }
 
