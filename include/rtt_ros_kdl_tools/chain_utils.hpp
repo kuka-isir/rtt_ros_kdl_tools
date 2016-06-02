@@ -49,13 +49,13 @@ namespace rtt_ros_kdl_tools{
 
   class ChainUtils{
     public:
-      ChainUtils(bool init_kdl_chains = true
-                ,const std::string& robot_description_name = "robot_description"
+      ChainUtils();
+      bool init(
+				const std::string& robot_description_name = "robot_description"
                 ,const std::string& root_link = "root_link"
                 ,const std::string& tip_link = "tip_link"
                 ,const KDL::Vector gravity_vector = KDL::Vector(0.,0.,-9.81)
-                );
-      bool init();
+				);
       KDL::Chain& Chain(){return kdl_chain_;}
       KDL::Tree& Tree(){return kdl_tree_;}
       /**
@@ -432,7 +432,6 @@ namespace rtt_ros_kdl_tools{
       bool cartPosOutdated_;
       bool cartVelOutdated_;
       bool isOutdated_;
-      bool is_initialized;
       bool isOutdated();
       /**
 	* @brief Sets the gravity torque, coriolis torque and inertia to outdated
