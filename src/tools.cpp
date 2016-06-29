@@ -37,7 +37,7 @@ bool initChainFromString(const std::string& robot_description,
         {
             // HACK: Setting pseudo fixed-joints to FIXED, so that KDL does not considers them.
             joint->second->type = urdf::Joint::FIXED;
-            ROS_INFO_STREAM("Removing fixed joint "<<joint->second->name<<std::endl);
+            // ROS_INFO_STREAM("Removing fixed joint "<<joint->second->name);
         }
       }
     }
