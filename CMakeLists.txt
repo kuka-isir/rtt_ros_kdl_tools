@@ -67,6 +67,12 @@ else()
 
   message(WARNING "OROCOS not found, compiling with NO_OROCOS flag")
   set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY COMPILE_DEFINITIONS NO_OROCOS)
+
+  install(DIRECTORY include/${PROJECT_NAME}/
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+    FILES_MATCHING PATTERN "*.hpp"
+    PATTERN ".svn" EXCLUDE
+  )
 endif()
 
 target_link_libraries(${PROJECT_NAME}
@@ -75,10 +81,10 @@ target_link_libraries(${PROJECT_NAME}
    ${USE_OROCOS_LIBRARIES}
 )
 
-if(CATKIN_ENABLE_TESTING)
-    catkin_add_gtest(test_jdot tests/test_jdot.cpp src/chainjnttojacdotsolver.cpp)
-    target_link_libraries(test_jdot ${orocos_kdl_LIBRARIES})
-
-    catkin_add_gtest(test_chain_utils tests/test_chain_utils.cpp src/chain_utils.cpp)
-    target_link_libraries(test_chain_utils ${catkin_LIBRARIES} ${PROJECT_NAME})
-endif()
+# if(CATKIN_ENABLE_TESTING)
+#     catkin_add_gtest(test_jdot tests/test_jdot.cpp src/chainjnttojacdotsolver.cpp)
+#     target_link_libraries(test_jdot ${orocos_kdl_LIBRARIES})
+#
+#     catkin_add_gtest(test_chain_utils tests/test_chain_utils.cpp src/chain_utils.cpp)
+#     target_link_libraries(test_chain_utils ${catkin_LIBRARIES} ${PROJECT_NAME})
+# endif()
