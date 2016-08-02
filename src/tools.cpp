@@ -228,6 +228,71 @@ bool readJntLimitsFromROSParamURDF(std::vector<std::string>& limited_jnt_names,
     return true;
 }
 
+
+bool readJntDynamicsFromROSParamURDF(const std::vector<std::string>& desired_jnt_names,
+                                   std::vector<double>& friction,
+                                   std::vector<double>& damping,
+                                   KDL::Tree& kdl_tree,
+                                   KDL::Chain& kdl_chain,
+                                   const std::string& robot_description_ros_name/* = "robot_description"*/,
+                                   const std::string& root_link_ros_name/* = "root_link"*/,
+                                   const std::string& tip_link_ros_name/* = "tip_link"*/)
+{
+	friction.clear();
+	damping.clear();
+    friction.resize(desired_jnt_names.size(), 0.0);
+    damping.resize(desired_jnt_names.size(), 0.0);
+
+    std::string robot_description_string, root_link_string, tip_link_string;
+
+    if(!ros::param::get(robot_description_ros_name, robot_description_string))
+        ROS_ERROR( "Could not get %s param",robot_description_ros_name.c_str());
+
+    if(!ros::param::get(root_link_ros_name, root_link_string))
+        ROS_ERROR( "Could not get %s param",root_link_ros_name.c_str());
+
+    if(!ros::param::get(tip_link_ros_name, tip_link_string))
+        ROS_ERROR( "Could not get %s param",tip_link_ros_name.c_str());
+
+    urdf::Model urdf_model;
+
+    if(!urdf_model.initString(robot_description_string)) {
+        ROS_ERROR("Could not init URDF");
+        return false;
+    }
+
+    if (!kdl_parser::treeFromUrdfModel(urdf_model, kdl_tree)) {
+        ROS_ERROR("Failed to construct kdl tree");
+        return false;
+    }
+
+    if(!kdl_tree.getChain(root_link_string, tip_link_string, kdl_chain)) {
+        ROS_ERROR("Failed to get kinematic chain");
+        return false;
+    }
+
+    int nbr_segs = kdl_chain.getNrOfSegments();
+    std::vector<std::string> seg_names;
+
+    for(int i=0; i<nbr_segs; i++)
+        seg_names.push_back(kdl_chain.getSegment(i).getJoint().getName());
+	
+	unsigned int count = 0;
+    for (std::map<std::string,boost::shared_ptr<urdf::Joint> >::iterator joint = urdf_model.joints_.begin(); joint != urdf_model.joints_.end(); ++joint) {
+        if ( joint->second->limits && std::find(seg_names.begin(), seg_names.end(),joint->second->name)!=seg_names.end() ) {
+            if (joint->second->limits->lower != joint->second->limits->upper) { // these ones are fixed joints !
+				if (std::find(desired_jnt_names.begin(), desired_jnt_names.end(), joint->second->name) != desired_jnt_names.end())
+				{
+					friction[count] = (joint->second->dynamics->friction);
+					damping[count] = (joint->second->dynamics->damping);
+					count++;
+				}
+            }
+        }
+    }
+    return true;
+}
+
 void initJointStateFromKDLCHain(const KDL::Chain &kdl_chain,sensor_msgs::JointState &joint_state)
 {
     // Construct blank joint state message

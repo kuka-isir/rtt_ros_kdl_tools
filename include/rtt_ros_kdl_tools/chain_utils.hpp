@@ -84,6 +84,16 @@ namespace rtt_ros_kdl_tools{
       std::vector<double> joints_upper_limit_;
 
       /**
+	* @brief The joints friction
+	*/
+      std::vector<double> joints_friction_;
+
+      /**
+	* @brief The joints damping
+	*/
+      std::vector<double> joints_damping_;
+
+      /**
 	* @brief The kinematic tree of the robot.
 	*/
       KDL::Tree kdl_tree_;
@@ -221,6 +231,9 @@ namespace rtt_ros_kdl_tools{
       std::vector<double>& getJointLowerLimits();
       std::vector<double>& getJointUpperLimits();
       std::vector< std::string >& getLimitedJointNames();
+	  
+	  std::vector<double>& getJointsDamping();
+      std::vector<double>& getJointsFriction();
 
       /**
 	* @brief Gives a kdl JntArray containing the joints position

@@ -33,6 +33,15 @@ bool ChainUtils::init(
         std::cerr << "Error at rtt_ros_kdl_tools::readJntLimitsFromROSParamURDF" <<std::endl;
         return false;
     }
+    
+    rtt_ros_kdl_tools::readJntDynamicsFromROSParamURDF(joints_name_
+            , joints_friction_
+            , joints_damping_
+            , kdl_tree_
+            , kdl_chain_
+            , robot_description_name
+            , root_link_name
+            , tip_link_name);
 
     for(int i=0;i<kdl_chain_.getNrOfSegments();i++)
         seg_names_idx_.add(kdl_chain_.getSegment(i).getName(),i);
@@ -200,6 +209,17 @@ std::vector< std::string >& ChainUtils::getLimitedJointNames()
 {
     return joints_name_;
 }
+
+std::vector< double >& ChainUtils::getJointsFriction()
+{
+	return this->joints_friction_;
+}
+
+std::vector< double >& ChainUtils::getJointsDamping()
+{
+	return this->joints_damping_;
+}
+
 
 void ChainUtils::updateModel()
 {
