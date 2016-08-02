@@ -277,15 +277,15 @@ bool readJntDynamicsFromROSParamURDF(const std::vector<std::string>& desired_jnt
     for(int i=0; i<nbr_segs; i++)
         seg_names.push_back(kdl_chain.getSegment(i).getJoint().getName());
 	
-	unsigned int count = 0;
+	unsigned int idx = 0;
     for (std::map<std::string,boost::shared_ptr<urdf::Joint> >::iterator joint = urdf_model.joints_.begin(); joint != urdf_model.joints_.end(); ++joint) {
         if ( joint->second->limits && std::find(seg_names.begin(), seg_names.end(),joint->second->name)!=seg_names.end() ) {
             if (joint->second->limits->lower != joint->second->limits->upper) { // these ones are fixed joints !
-				if (std::find(desired_jnt_names.begin(), desired_jnt_names.end(), joint->second->name) != desired_jnt_names.end())
+				idx = find(desired_jnt_names.begin(), desired_jnt_names.end(), joint->second->name) - desired_jnt_names.begin();
+				if( idx < friction.size() )
 				{
-					friction[count] = (joint->second->dynamics->friction);
-					damping[count] = (joint->second->dynamics->damping);
-					count++;
+					friction[idx] = (joint->second->dynamics->friction);
+					damping[idx] = (joint->second->dynamics->damping);
 				}
             }
         }
