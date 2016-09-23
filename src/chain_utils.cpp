@@ -12,9 +12,9 @@ bool ChainUtils::init(
                 const KDL::Vector gravity_vector
 )
 {
-	this->robot_description_name = robot_description_name;
-	this->root_link_name = root_link_name;
-	this->tip_link_name = tip_link_name;
+	this->robot_description_ros_name = robot_description_name;
+	this->root_link_ros_name = root_link_name;
+	this->tip_link_ros_name = tip_link_name;
 	this->gravity_vector = gravity_vector;
     if(!rtt_ros_kdl_tools::initChainFromROSParamURDF(kdl_tree_, kdl_chain_))
     {

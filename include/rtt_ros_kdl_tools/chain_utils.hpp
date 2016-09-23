@@ -61,12 +61,12 @@ namespace rtt_ros_kdl_tools{
       /**
 	* @brief The root link of the kdl chain
 	*/
-      std::string root_link_;
+      std::string root_link_name_;
 
       /**
 	* @brief The tip link of the kdl chain
 	*/
-      std::string tip_link_;
+      std::string tip_link_name_;
 
       /**
 	* @brief The joints name
@@ -451,9 +451,13 @@ namespace rtt_ros_kdl_tools{
 	*/
       void outdate();
   private:
-        std::string robot_description_name;
-        std::string root_link_name;
-        std::string tip_link_name;
+		/** 
+		 * @brief the rosparam argument names
+		 */
+        std::string robot_description_ros_name;
+        std::string root_link_ros_name;
+        std::string tip_link_ros_name;
+		
         KDL::Vector gravity_vector;
         KDL::RotationalInertia rot_intertia;
   };
