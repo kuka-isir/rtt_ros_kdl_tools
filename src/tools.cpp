@@ -1,6 +1,8 @@
 #include <rtt_ros_kdl_tools/tools.hpp>
 #include <ros/param.h>
+#ifndef NO_OROCOS
 #include <rtt_rosparam/rosparam.h>
+#endif
 #include <urdf/model.h>
 
 namespace rtt_ros_kdl_tools {
