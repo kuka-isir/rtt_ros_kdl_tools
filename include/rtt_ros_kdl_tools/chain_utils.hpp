@@ -30,7 +30,7 @@ namespace rtt_ros_kdl_tools{
             std::cerr << "Segment idx is empty ! "<< std::endl;
             return -1;
         }
-        if(seg_idx_names.count(segment_name) < 1) 
+        if(seg_idx_names.count(segment_name) > 0) 
             return seg_idx_names[segment_name];
         else{
             int last_index = seg_idx[seg_idx.size()-1];
