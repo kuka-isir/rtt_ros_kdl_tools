@@ -1,5 +1,7 @@
 #include "rtt_ros_kdl_tools/chain_utils.hpp"
 
+#include <ros/param.h>
+
 namespace rtt_ros_kdl_tools {
 
 ChainUtils::ChainUtils()
@@ -16,6 +18,9 @@ bool ChainUtils::init(
 	this->root_link_ros_name = root_link_name;
 	this->tip_link_ros_name = tip_link_name;
 	this->gravity_vector = gravity_vector;
+	
+	ros::param::get(root_link_name, root_link_name_);
+	
     if(!rtt_ros_kdl_tools::initChainFromROSParamURDF(kdl_tree_, kdl_chain_))
     {
         std::cerr << "Error at rtt_ros_kdl_tools::initChainFromROSParamURDF" <<std::endl;
@@ -131,6 +136,10 @@ const std::string& ChainUtils::getSegmentName(unsigned int index) {
 
 unsigned int ChainUtils::getSegmentIndex(const std::string& name) {
     return seg_names_idx_[name];
+}
+
+const std::string& ChainUtils::getRootSegmentName( ) {
+	return this->root_link_name_;
 }
 
 void ChainUtils::getJointLimits(

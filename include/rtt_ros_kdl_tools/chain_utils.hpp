@@ -217,6 +217,11 @@ namespace rtt_ros_kdl_tools{
 	* @return The segment's index
 	*/
       unsigned int getSegmentIndex(const std::string& name);
+	  
+	  /**
+	   * @brief Returns the name of the root segment
+	   */
+	  const std::string& getRootSegmentName( );
 
       /**
 	* @brief Gets the joints limits from the URDF
