@@ -1,6 +1,12 @@
 #include <rtt_ros_kdl_tools/tools.hpp>
 #include <ros/param.h>
+
+#ifndef NO_OROCOS
+#include <rtt/RTT.hpp>
+#include <rtt/TaskContext.hpp>
 #include <rtt_rosparam/rosparam.h>
+#endif
+
 #include <urdf/model.h>
 
 namespace rtt_ros_kdl_tools {
@@ -81,7 +87,9 @@ void printChain(const KDL::Chain& kdl_chain)
         ROS_INFO_STREAM("    "<<kdl_chain.getSegment(i).getName());
 }
 
-bool initChainFromROSParamURDF(RTT::TaskContext* task,
+#ifndef NO_OROCOS
+
+bool initChainFromROSParamURDF(void * this_rtt_taskcontext,
                                KDL::Tree& kdl_tree,
                                KDL::Chain& kdl_chain,
                                const std::string& robot_description_ros_name/* = "robot_description"*/,
@@ -91,6 +99,13 @@ bool initChainFromROSParamURDF(RTT::TaskContext* task,
                                const std::string& tip_link_ros_name/* = "tip_link"*/,
                                const std::string& tip_link_rtt_name/* = "tip_link"*/)
 {
+    RTT::TaskContext * task = NULL;
+    if(! (task = static_cast<RTT::TaskContext *>(this_rtt_taskcontext)))
+    {
+        RTT::log(RTT::Error) << "Could not cast to RTT::TaskContext *, did you provided this ?"<<RTT::endlog();
+        return false;
+    }
+    
     if(task == NULL) return false;
 
     std::string robot_description,root_link,tip_link;
@@ -148,6 +163,37 @@ bool initChainFromROSParamURDF(RTT::TaskContext* task,
 
     return initChainFromString(robot_description_prop.get(),root_link,tip_link,kdl_tree,kdl_chain);
 }
+
+bool getAllPropertiesFromROSParam(void * this_rtt_taskcontext)
+{
+    RTT::TaskContext * task = NULL;
+    if(! (task = static_cast<RTT::TaskContext *>(this_rtt_taskcontext)))
+    {
+        RTT::log(RTT::Error) << "Could not cast to RTT::TaskContext *, did you provided this ?"<<RTT::endlog();
+        return false;
+    }
+    // Get RosParameters if available
+    boost::shared_ptr<rtt_rosparam::ROSParam> rosparam =
+        task->getProvider<rtt_rosparam::ROSParam>("rosparam");
+
+    if(rosparam) {
+        const RTT::PropertyBag::Properties &properties =  task->properties()->getProperties();
+        for(RTT::PropertyBag::Properties::const_iterator it = properties.begin();
+            it != properties.end();++it)
+        {
+            if(rosparam->getParam(task->getName() +"/"+(*it)->getName(),(*it)->getName()))
+                RTT::log(RTT::Info) << task->getName() +"/"+(*it)->getName() << " => "<< task->getProperty((*it)->getName())<< RTT::endlog();
+            else
+                RTT::log(RTT::Info) << "No param found for "<<task->getName() +"/"+(*it)->getName()<< RTT::endlog();
+        }
+    }else{
+        RTT::log(RTT::Error) << "ROS Param could not be loaded "<< RTT::endlog();
+        return false;
+    }
+    return true;
+}
+
+#endif
 
 bool initChainFromROSParamURDF(KDL::Tree& kdl_tree,
                                KDL::Chain& kdl_chain,
@@ -322,16 +368,16 @@ sensor_msgs::JointState initJointStateFromKDLCHain(const KDL::Chain& kdl_chain)
 
 bool initJointStateMsgFromString(const std::string& robot_description, sensor_msgs::JointState& joint_state)
 {
-    RTT::log(RTT::Debug)<<"Creating Joint State message from robot_description" << RTT::endlog();
+    ROS_INFO("Creating Joint State message from robot_description");
     urdf::Model model;
 
     // Verify if provided robot_description is correct
     if(!model.initString(robot_description)) {
-        RTT::log(RTT::Error) << "Could not init URDF." <<RTT::endlog();
+        ROS_ERROR("Could not init URDF");
         return false;
     }
 
-    RTT::log(RTT::Debug) << "Robot name : "<<model.getName()<< RTT::endlog();
+    ROS_DEBUG("Robot name : [%s]",model.getName().c_str());
     // Create a blank joint state msg
     joint_state = sensor_msgs::JointState();
 
@@ -343,7 +389,7 @@ bool initJointStateMsgFromString(const std::string& robot_description, sensor_ms
             if(j->second->limits->lower == j->second->limits->upper)
             {
                 // NOTE: Setting pseudo fixed-joints to FIXED, so that KDL does not considers them.
-                RTT::log(RTT::Info) << "Removing fixed joint "<<j->second->name<<std::endl;
+                ROS_INFO_STREAM("Removing fixed joint "<<j->second->name);
                 continue;
             }
         }
@@ -352,35 +398,12 @@ bool initJointStateMsgFromString(const std::string& robot_description, sensor_ms
                 j->second->type != urdf::Joint::FLOATING)
         {
             const std::string name = j->first;
-            RTT::log(RTT::Debug)<<"Adding Joint "<< name << RTT::endlog();
+            ROS_DEBUG_STREAM("Adding Joint "<< name);
             joint_state.name.push_back(name);
             joint_state.position.push_back(0.);
             joint_state.velocity.push_back(0.);
             joint_state.effort.push_back(0.);
         }
-    }
-    return true;
-}
-
-bool getAllPropertiesFromROSParam(RTT::TaskContext* _this)
-{
-    // Get RosParameters if available
-    boost::shared_ptr<rtt_rosparam::ROSParam> rosparam =
-        _this->getProvider<rtt_rosparam::ROSParam>("rosparam");
-
-    if(rosparam) {
-        const RTT::PropertyBag::Properties &properties =  _this->properties()->getProperties();
-        for(RTT::PropertyBag::Properties::const_iterator it = properties.begin();
-            it != properties.end();++it)
-        {
-            if(rosparam->getParam(_this->getName() +"/"+(*it)->getName(),(*it)->getName()))
-                RTT::log(RTT::Info) << _this->getName() +"/"+(*it)->getName() << " => "<< _this->getProperty((*it)->getName())<< RTT::endlog();
-            else
-                RTT::log(RTT::Info) << "No param found for "<<_this->getName() +"/"+(*it)->getName()<< RTT::endlog();
-        }
-    }else{
-        RTT::log(RTT::Error) << "ROS Param could not be loaded "<< RTT::endlog();
-        return false;
     }
     return true;
 }

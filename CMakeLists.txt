@@ -20,6 +20,7 @@ find_package(orocos_kdl REQUIRED)
 find_package(OROCOS-RTT)
 
 if(OROCOS-RTT_FOUND)
+    message(STATUS "Building with OROCOS")
     include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
     orocos_use_package(rtt_roscomm)
     orocos_use_package(rtt_rosparam)

@@ -1,13 +1,6 @@
 #ifndef __RTT_ROS_KDL_TOOLS_HPP
 #define __RTT_ROS_KDL_TOOLS_HPP
 
-#ifndef NO_OROCOS
-
-#include <rtt/RTT.hpp>
-#include <rtt/TaskContext.hpp>
-
-#endif
-
 #include <kdl/chainiksolvervel_pinv_nso.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
 #include <kdl/chainidsolver_recursive_newton_euler.hpp>
@@ -43,8 +36,8 @@ namespace rtt_ros_kdl_tools{
                              const std::string& tip_link,
                              KDL::Tree& kdl_tree,
                              KDL::Chain& kdl_chain);
-#ifndef NO_OROCOS
-    bool initChainFromROSParamURDF(RTT::TaskContext* task,
+
+    bool initChainFromROSParamURDF(void * this_rtt_taskcontext,
                                    KDL::Tree& kdl_tree,
                                    KDL::Chain& kdl_chain,
                                    const std::string& robot_description_ros_name = "robot_description",
@@ -53,8 +46,8 @@ namespace rtt_ros_kdl_tools{
                                    const std::string& root_link_rtt_name = "root_link",
                                    const std::string& tip_link_ros_name = "tip_link",
                                    const std::string& tip_link_rtt_name = "tip_link");
-    bool getAllPropertiesFromROSParam(RTT::TaskContext* _this);
-#endif
+    bool getAllPropertiesFromROSParam(void * this_rtt_taskcontext);
+
     bool initChainFromROSParamURDF(KDL::Tree& kdl_tree,
 				KDL::Chain& kdl_chain,
 				const std::string& robot_description_ros_name = "robot_description",

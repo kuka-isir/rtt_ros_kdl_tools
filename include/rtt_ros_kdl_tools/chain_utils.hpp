@@ -30,7 +30,7 @@ namespace rtt_ros_kdl_tools{
             std::cerr << "Segment idx is empty ! "<< std::endl;
             return -1;
         }
-        if(seg_idx_names[segment_name])
+        if(seg_idx_names.count(segment_name) > 0) 
             return seg_idx_names[segment_name];
         else{
             int last_index = seg_idx[seg_idx.size()-1];
@@ -61,12 +61,12 @@ namespace rtt_ros_kdl_tools{
       /**
 	* @brief The root link of the kdl chain
 	*/
-      std::string root_link_;
+      std::string root_link_name_;
 
       /**
 	* @brief The tip link of the kdl chain
 	*/
-      std::string tip_link_;
+      std::string tip_link_name_;
 
       /**
 	* @brief The joints name
@@ -217,6 +217,11 @@ namespace rtt_ros_kdl_tools{
 	* @return The segment's index
 	*/
       unsigned int getSegmentIndex(const std::string& name);
+	  
+	  /**
+	   * @brief Returns the name of the root segment
+	   */
+	  const std::string& getRootSegmentName( );
 
       /**
 	* @brief Gets the joints limits from the URDF
@@ -451,9 +456,13 @@ namespace rtt_ros_kdl_tools{
 	*/
       void outdate();
   private:
-        std::string robot_description_name;
-        std::string root_link_name;
-        std::string tip_link_name;
+		/** 
+		 * @brief the rosparam argument names
+		 */
+        std::string robot_description_ros_name;
+        std::string root_link_ros_name;
+        std::string tip_link_ros_name;
+		
         KDL::Vector gravity_vector;
         KDL::RotationalInertia rot_intertia;
   };
