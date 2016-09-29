@@ -12,7 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   tf_conversions
-  trajectory_msgs
+  eigen_conversions
+  kdl_conversions
 )
 
 find_package(orocos_kdl REQUIRED)

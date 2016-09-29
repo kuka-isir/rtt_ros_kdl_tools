@@ -1,6 +1,8 @@
 #include "rtt_ros_kdl_tools/chain_utils.hpp"
-
 #include <ros/param.h>
+#include <kdl_conversions/kdl_msg.h>
+#include <eigen_conversions/eigen_kdl.h>
+#include <kdl/frames_io.hpp>
 
 namespace rtt_ros_kdl_tools {
 
@@ -18,9 +20,10 @@ bool ChainUtils::init(
 	this->root_link_ros_name = root_link_name;
 	this->tip_link_ros_name = tip_link_name;
 	this->gravity_vector = gravity_vector;
-	
+    this->ft_sensor_measure_link = tip_link_name;
+
 	ros::param::get(root_link_name, root_link_name_);
-	
+
     if(!rtt_ros_kdl_tools::initChainFromROSParamURDF(kdl_tree_, kdl_chain_))
     {
         std::cerr << "Error at rtt_ros_kdl_tools::initChainFromROSParamURDF" <<std::endl;
@@ -38,7 +41,7 @@ bool ChainUtils::init(
         std::cerr << "Error at rtt_ros_kdl_tools::readJntLimitsFromROSParamURDF" <<std::endl;
         return false;
     }
-    
+
     rtt_ros_kdl_tools::readJntDynamicsFromROSParamURDF(joints_name_
             , joints_friction_
             , joints_damping_
@@ -60,14 +63,25 @@ bool ChainUtils::init(
     gravityTorque_.resize(kdl_chain_.getNrOfJoints());
     corioCentriTorque_.resize(kdl_chain_.getNrOfJoints());
     jacobian_.resize(kdl_chain_.getNrOfJoints());
+    tmp_jac_.resize(kdl_chain_.getNrOfJoints());
     seg_jacobian_.resize(kdl_chain_.getNrOfJoints());
     seg_jacobian_dot_.resize(kdl_chain_.getNrOfJoints());
+    zero_kdl.resize(kdl_chain_.getNrOfJoints());
+    zero_kdl.data.setZero();
+
+    tmp_array_pos.resize(kdl_chain_.getNrOfJoints());
+    tmp_array_vel.resize(kdl_chain_.getNrOfJoints());
+
+    ext_torque_.resize(kdl_chain_.getNrOfJoints());
+    f_ext_.resize(kdl_chain_.getNrOfSegments());
+    std::fill(f_ext_.begin(),f_ext_.end(),KDL::Wrench());
 
     chainjacsolver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
     fksolver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
     fksolvervel_.reset(new KDL::ChainFkSolverVel_recursive(kdl_chain_));
     dynModelSolver_.reset(new KDL::ChainDynParam(kdl_chain_, gravity_vector));
     jntToJacDotSolver_.reset(new KDL::ChainJntToJacDotSolver(kdl_chain_));
+    inverseDynamicsSolver_.reset(new KDL::ChainIdSolver_RNE(kdl_chain_,gravity_vector));
 
     outdate();
     return true;
@@ -195,12 +209,6 @@ KDL::JntArray& ChainUtils::getGravityTorque() {
     return gravityTorque_;
 }
 
-void ChainUtils::setExternalMeasuredWrench(std::vector<double> &f, std::vector<double> &t) {
-    for(unsigned int i=0; i<3; i++) {
-        W_ext_.force(i) = f[i];
-        W_ext_.torque(i) = t[i];
-    }
-}
 KDL::Twist& ChainUtils::getJdotQdot()
 {
     return jdot_qdot_;
@@ -239,11 +247,7 @@ void ChainUtils::updateModel()
     computeCorioCentriTorque();
     computeJacobian();
 }
-void ChainUtils::setExternalWrenchPoint(std::vector<double> &p) {
-    for(unsigned int i=0; i<3; i++) {
-        W_ext_point_(i) = p[i];
-    }
-}
+
 void ChainUtils::computeJdotQdot()
 {
     jntToJacDotSolver_->JntToJacDot(qqd_, jdot_qdot_);
@@ -274,22 +278,44 @@ void ChainUtils::computeGravityTorque() {
     dynModelSolver_->JntToGravity(q_,gravityTorque_);
 }
 
+void ChainUtils::setExternalMeasuredWrench(const geometry_msgs::Wrench& external_wrench, int segment_number)
+{
+    tf::wrenchMsgToKDL(external_wrench,W_ext_);
+    if(0 <= segment_number && segment_number < f_ext_.size())
+    {
+        f_ext_[segment_number] = W_ext_;
+    }
+    else
+    {
+        std::cerr << "Wrong segment number provided "<<segment_number<< std::endl;
+    }
+}
 
-// void ChainUtils::computeExternalWrenchTorque(){
-// TODO
-//   KDL::Jacobian j(kdl_tree_.getNrOfJoints());
-//   treejacsolver_->JntToJac(q_, j, "06");
-//
-//   KDL::Wrench w = W_ext_.RefPoint(-W_ext_point_);
-//     Eigen::Vector3d f,t;
-//
-//   for(unsigned int i=0;i<3;i++){
-//     f(i) = w.force.data[i];
-//     t(i) = w.torque.data[i];
-//   }
-//
-//   externalWrenchTorque_.data = j.data.transpose().block(0,0,7,3) * f + j.data.transpose().block(0,3,7,3) * t;
-// }
+KDL::JntArray& ChainUtils::computeExternalWrenchTorque(bool compute_gravity /* = true */)
+{
+    return computeExternalWrenchTorque(q_.data,qd_.data,compute_gravity);
+}
+
+KDL::JntArray& ChainUtils::computeExternalWrenchTorque(const Eigen::VectorXd& jnt_pos,
+                                                       const Eigen::VectorXd& jnt_vel,
+                                                       bool compute_gravity /*= true*/)
+{
+    ext_torque_.data.setZero();
+
+    tmp_array_pos.data = jnt_pos;
+    tmp_array_vel.data = jnt_vel;
+
+    inverseDynamicsSolver_->CartToJnt(tmp_array_pos,tmp_array_vel,zero_kdl,f_ext_,ext_torque_);
+    // Remove gravity
+    if(compute_gravity)
+        dynModelSolver_->JntToGravity(tmp_array_pos,gravityTorque_);
+
+    ext_torque_.data -= getGravityTorque().data;
+
+    return ext_torque_;
+}
+
+
 
 // void ChainUtils::computeFrictionTorque(){
 // TODO
