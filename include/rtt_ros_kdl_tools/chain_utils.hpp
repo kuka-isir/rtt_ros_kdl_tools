@@ -13,11 +13,11 @@
 #include <rtt_ros_kdl_tools/tools.hpp>
 #include <rtt_ros_kdl_tools/chainjnttojacdotsolver.hpp>
 #include <ros/ros.h>
-#include <geometry_msgs/Wrench.h>
 #include <Eigen/Dense>
+#include <sstream>
 
 namespace rtt_ros_kdl_tools{
-    
+
 class SegmentIndice
 {
     /* This class is used to bind segment names to the index in the chain */
@@ -32,21 +32,27 @@ class SegmentIndice
             std::cerr << "Segment idx is empty ! "<< std::endl;
             return -1;
         }
-        if(seg_idx_names.count(segment_name) > 0) 
+        if(seg_idx_names.count(segment_name) > 0)
+        {
             return seg_idx_names[segment_name];
-        else{
-            int last_index = seg_idx[seg_idx.size()-1];
-            std::cerr << "Segment name ["<<segment_name<<"] does not exists, returning last element in map ["<<last_index<<"]" << std::endl;
-            return last_index;
+        }
+        else
+        {
+            std::ostringstream ss;
+            ss << "Segment name ["<<segment_name<<"] does not exists";
+            throw std::runtime_error(ss.str());
+            // int last_index = seg_idx[seg_idx.size()-1];
+            // std::cerr << "Segment name ["<<segment_name<<"] does not exists, returning last element in map ["<<last_index<<"]" << std::endl;
+            // return last_index;
         }
     }
     public: void add(const std::string& seg_name,int i)
     {
         seg_idx_names[seg_name] = i;
-        seg_idx.push_back(i);
+        // seg_idx.push_back(i);
     }
     protected : std::map<std::string,int> seg_idx_names;
-    protected : std::vector<int> seg_idx;
+    // protected : std::vector<int> seg_idx;
 };
 
 class ChainUtils{
@@ -219,7 +225,7 @@ class ChainUtils{
     * @return The segment's index
     */
     unsigned int getSegmentIndex(const std::string& name);
-    
+
     /**
     * @brief Returns the name of the root segment
     */
@@ -238,7 +244,7 @@ class ChainUtils{
     std::vector<double>& getJointLowerLimits();
     std::vector<double>& getJointUpperLimits();
     std::vector< std::string >& getLimitedJointNames();
-    
+
     std::vector<double>& getJointsDamping();
     std::vector<double>& getJointsFriction();
 
@@ -259,7 +265,7 @@ class ChainUtils{
     * @param[out] massMatrix The mass matrix
     */
     KDL::JntSpaceInertiaMatrix & getInertiaMatrix();
-    
+
     /**
     * @brief Gives a kdl JntSpaceInertiaMatrix containing the inverse of the mass matrix
     * @return massInverseMatrix The inverse mass matrix
@@ -312,20 +318,29 @@ class ChainUtils{
     void updateModel();
     /**
     * @brief Add external forces from a force/torque sensor
+    * @param[in] external_wrench The external force associate with a link, expressed in the link frame, at the link origin.
+    * @param[in] segment_number The link/segment number associated with the ft sensor
+    */
+    void setExternalMeasuredWrench(const KDL::Wrench& external_wrench, int segment_number);
+
+    void computeExternalWrenchTorque(bool compute_gravity = true);
+    void computeExternalWrenchTorque(const Eigen::VectorXd& jnt_pos, bool compute_gravity = true);
+    KDL::JntArray& getExternalWrenchTorque();
+    /**
+    * @brief Add external torque applied to the robot
     * @param[in] external_wrench The external force associate with a link.
     * @param[in] segment_number The link/segment number associated with the ft sensor
     */
-    void setExternalMeasuredWrench(const geometry_msgs::Wrench& external_wrench, int segment_number);
-
-    KDL::JntArray& computeExternalWrenchTorque(bool compute_gravity = true);
-    KDL::JntArray& computeExternalWrenchTorque(const Eigen::VectorXd& jnt_pos,const Eigen::VectorXd& jnt_vel, bool compute_gravity = true);
+    void setExternalAdditionalTorque(const Eigen::VectorXd& external_add_torque);
+    KDL::JntArray& getExternalAdditionalTorque();
+    KDL::JntArray& getTotalExternalTorque();
     /**
     * @brief Computes the mass matrix of the model.
     */
     void computeInertiaMatrix();
     /**
     * @brief Inverses the previously computed mass matrix of the model.
-    */	  
+    */
     void inverseInertiaMatrix();
     /**
         * @brief Computes the mass matrix of the model.
@@ -373,14 +388,14 @@ class ChainUtils{
     void computeJdotQdot();
 private:
     KDL::Jacobian jacobian_,seg_jacobian_,seg_jacobian_dot_,tmp_jac_;
-    KDL::JntArray tmp_array_pos,tmp_array_vel;
+    KDL::JntArray tmp_array_pos;
     KDL::JntArrayVel qqd_;
     KDL::JntArray zero_kdl;
     KDL::Twist jdot_qdot_,seg_jdot_qdot_;
     KDL::Frame ee_pos_,seg_pos_;
     KDL::Twist ee_vel_,seg_vel_;
     KDL::FrameVel frame_vel_;
-    KDL::JntArray ext_torque_;
+    KDL::JntArray ext_wrench_torque_,ext_add_torque_,ext_torque_all_;
     /**
     * @brief The mapping between segment indice and segment name
     */
@@ -395,13 +410,6 @@ private:
     * @brief The current joint velocity.
     */
     KDL::JntArray qd_;
-
-    /**
-    * @brief The current external measured wrench.
-    */
-    KDL::Wrench W_ext_;
-    Eigen::Matrix<double,6,1> W_ext_eigen_;
-
     /**
     * @brief The forward kinematic solver for position
     */
@@ -454,13 +462,13 @@ private:
     * @brief Sets the gravity torque, coriolis torque and inertia to outdated
     */
     void outdate();
-    /** 
+    /**
     * @brief the rosparam argument names
     */
     std::string robot_description_ros_name;
     std::string root_link_ros_name;
     std::string tip_link_ros_name;
-    
+
     KDL::Vector gravity_vector;
     KDL::RotationalInertia rot_intertia;
     std::string ft_sensor_measure_link;
