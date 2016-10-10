@@ -24,10 +24,16 @@ bool ChainUtils::init()
     return true;
 }
 
-bool ChainUtils::CartesianToJoint(KDL::JntArray joint_seed, KDL::Frame desired_end_effector_pose, KDL::JntArray& return_joints, KDL::Twist tolerances)
+bool ChainUtils::cartesianToJoint(KDL::JntArray joint_seed, KDL::Frame desired_end_effector_pose, KDL::JntArray& return_joints, KDL::Twist tolerances)
 {
     return ik_solver->CartToJnt(joint_seed,desired_end_effector_pose,return_joints,tolerances) >= 0;
 }
 
+
+KDL::Frame& ChainUtils::jointToCartesian(const KDL::JntArray& joints)
+{
+    fksolver_->JntToCart(joints,fk_last_segment_);
+    return fk_last_segment_;
+}
 
 }

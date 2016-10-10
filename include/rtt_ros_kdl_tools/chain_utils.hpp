@@ -11,9 +11,11 @@ class ChainUtils : public ChainUtilsBase
 {
 public:
     bool init();
-    bool CartesianToJoint(KDL::JntArray joint_seed, KDL::Frame desired_end_effector_pose, KDL::JntArray& return_joints, KDL::Twist tolerances);
+    bool cartesianToJoint(KDL::JntArray joint_seed, KDL::Frame desired_end_effector_pose, KDL::JntArray& return_joints, KDL::Twist tolerances);
+    KDL::Frame& jointToCartesian(const KDL::JntArray& joints);
 protected:
     boost::shared_ptr<TRAC_IK::TRAC_IK> ik_solver;
+    KDL::Frame fk_last_segment_;
 };
 
 }
