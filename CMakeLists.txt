@@ -16,6 +16,15 @@ find_package(catkin REQUIRED COMPONENTS
   kdl_conversions
 )
 
+find_package(trac_ik_lib QUIET)
+
+if(${trac_ik_lib_FOUND})
+    include_directories(${trac_ik_lib_INCLUDE_DIRS})
+else()
+    message(WARNING "Not building with trac_ik, please consider installing it\n\nhttps://bitbucket.org/traclabs/trac_ik or in the apt-get")
+endif()
+
+
 find_package(orocos_kdl REQUIRED)
 
 find_package(OROCOS-RTT)
@@ -40,6 +49,7 @@ if(OROCOS-RTT_FOUND)
     src/tools.cpp
     src/chaincogsolver.cpp
     src/chainjnttojacdotsolver.cpp
+    src/chain_utils_base.cpp
     src/chain_utils.cpp
     )
 
@@ -53,6 +63,7 @@ if(OROCOS-RTT_FOUND)
   orocos_install_headers(
     include/${PROJECT_NAME}/tools.hpp
     include/${PROJECT_NAME}/chainjnttojacdotsolver.hpp
+    include/${PROJECT_NAME}/chain_utils_base.hpp
     include/${PROJECT_NAME}/chain_utils.hpp
     include/${PROJECT_NAME}/mqueue_connpolicy.hpp
     include/${PROJECT_NAME}/chaincogsolver.hpp
@@ -64,6 +75,7 @@ else()
     src/tools.cpp
     src/chaincogsolver.cpp
     src/chainjnttojacdotsolver.cpp
+    src/chain_utils_base.cpp
     src/chain_utils.cpp
     )
 
@@ -81,6 +93,7 @@ target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    ${orocos_kdl_LIBRARIES}
    ${USE_OROCOS_LIBRARIES}
+   ${trac_ik_lib_LIBRARIES}
 )
 
 # if(CATKIN_ENABLE_TESTING)
