@@ -2,9 +2,20 @@
 
 namespace rtt_ros_kdl_tools {
 
-bool ChainUtils::init()
+bool ChainUtils::init(
+    const std::string& robot_description_name = "robot_description"
+    ,const std::string& root_link = "root_link"
+    ,const std::string& tip_link = "tip_link"
+    ,const KDL::Vector gravity_vector = KDL::Vector(0.,0.,-9.81))
 {
-    if(!ChainUtilsBase::init()) return false;
+    if(!ChainUtilsBase::init(
+        robot_description_name,
+        root_link,
+        tip_link,
+        gravity_vector))
+    {
+        return false;
+    }
 
     KDL::JntArray lower_joint_limits(getJointLowerLimits().size());
     KDL::JntArray upper_joint_limits(getJointUpperLimits().size());

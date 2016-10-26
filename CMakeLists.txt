@@ -15,13 +15,13 @@ find_package(catkin REQUIRED COMPONENTS
   eigen_conversions
   kdl_conversions
 )
-
-find_package(trac_ik_lib QUIET)
+find_package(Eigen REQUIRED)
+find_package(trac_ik_lib REQUIRED)
 
 if(${trac_ik_lib_FOUND})
     include_directories(${trac_ik_lib_INCLUDE_DIRS})
 else()
-    message(WARNING "Not building with trac_ik, please consider installing it\n\nhttps://bitbucket.org/traclabs/trac_ik or in the apt-get")
+    message(FATAL_ERROR "Not building with trac_ik, please consider installing it\n\nhttps://bitbucket.org/traclabs/trac_ik or in the apt-get")
 endif()
 
 
@@ -42,6 +42,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${orocos_kdl_INCLUDE_DIRS}
   ${USE_OROCOS_INCLUDE_DIRS}
+  ${EIGEN_INCLUDE_DIRS}
 )
 
 if(OROCOS-RTT_FOUND)
@@ -51,14 +52,11 @@ if(OROCOS-RTT_FOUND)
     src/chainjnttojacdotsolver.cpp
     src/chain_utils_base.cpp
     src/chain_utils.cpp
+    src/standard_ports.cpp
     )
 
   set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY COMPILE_DEFINITIONS RTT_COMPONENT)
 
-  orocos_generate_package(
-    INCLUDE_DIRS include
-    DEPENDS rtt_rosclock rtt_rosparam
-    )
 
   orocos_install_headers(
     include/${PROJECT_NAME}/tools.hpp
@@ -67,7 +65,14 @@ if(OROCOS-RTT_FOUND)
     include/${PROJECT_NAME}/chain_utils.hpp
     include/${PROJECT_NAME}/mqueue_connpolicy.hpp
     include/${PROJECT_NAME}/chaincogsolver.hpp
+    include/${PROJECT_NAME}/standard_ports.hpp
     )
+    
+    orocos_generate_package(
+        INCLUDE_DIRS include ${EIGEN_INCLUDE_DIRS}
+        DEPENDS rtt_rosclock rtt_rosparam
+    )
+    
 else()
   catkin_package(INCLUDE_DIRS include)
 
@@ -77,6 +82,7 @@ else()
     src/chainjnttojacdotsolver.cpp
     src/chain_utils_base.cpp
     src/chain_utils.cpp
+    src/standard_ports.cpp
     )
 
   message(WARNING "OROCOS not found, compiling with NO_OROCOS flag")
