@@ -154,6 +154,10 @@ const std::string& ChainUtilsBase::getRootSegmentName( ) {
 	return this->root_link_name_;
 }
 
+const std::string& ChainUtilsBase::getTipSegmentName( ) {
+        return this->tip_link_name_;
+}
+
 void ChainUtilsBase::getJointLimits(
     std::vector<std::string>& limited_joints
     , std::vector<double>& lower_limits

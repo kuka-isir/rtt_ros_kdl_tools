@@ -151,7 +151,10 @@ public:
     * @brief Returns the name of the root segment
     */
     const std::string& getRootSegmentName( );
-
+    /**
+    * @brief Returns the name of the tip segment
+    */
+    const std::string& getTipSegmentName( );
     /**
     * @brief Gets the joints limits from the URDF
     * @param[out] limited_joints The names of the joints that have joint limits
