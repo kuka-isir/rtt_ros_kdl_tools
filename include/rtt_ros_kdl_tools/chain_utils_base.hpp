@@ -167,10 +167,17 @@ public:
 
     std::vector<double>& getJointLowerLimits();
     std::vector<double>& getJointUpperLimits();
-    std::vector< std::string >& getLimitedJointNames();
 
     std::vector<double>& getJointsDamping();
     std::vector<double>& getJointsFriction();
+    
+    Eigen::VectorXd& getJointLowerLimit();
+    Eigen::VectorXd& getJointUpperLimit();
+
+    Eigen::VectorXd& getJointDamping();
+    Eigen::VectorXd& getJointFriction();
+    
+    std::vector< std::string >& getLimitedJointNames();
 
     /**
     * @brief Gives a kdl JntArray containing the joints position
@@ -301,21 +308,25 @@ protected:
     * @brief The joints lower limits
     */
     std::vector<double> joints_lower_limit_;
+    Eigen::VectorXd joint_lower_limit_;
 
     /**
     * @brief The joints upper limits
     */
     std::vector<double> joints_upper_limit_;
+    Eigen::VectorXd joint_upper_limit_;
 
     /**
     * @brief The joints friction
     */
     std::vector<double> joints_friction_;
+    Eigen::VectorXd joint_friction_;
 
     /**
     * @brief The joints damping
     */
     std::vector<double> joints_damping_;
+    Eigen::VectorXd joint_damping_;
 
     /**
     * @brief The kinematic tree of the robot.

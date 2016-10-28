@@ -55,6 +55,16 @@ bool ChainUtilsBase::init(
     qd_.resize(kdl_chain_.getNrOfJoints());
     qqd_.resize(kdl_chain_.getNrOfJoints());
 
+    joint_lower_limit_.resize(kdl_chain_.getNrOfJoints());
+    joint_upper_limit_.resize(kdl_chain_.getNrOfJoints());
+    joint_friction_.resize(kdl_chain_.getNrOfJoints());
+    joint_damping_.resize(kdl_chain_.getNrOfJoints());
+    
+    joint_lower_limit_ = Eigen::VectorXd::Map(joints_lower_limit_.data(),kdl_chain_.getNrOfJoints());
+    joint_upper_limit_ = Eigen::VectorXd::Map(joints_upper_limit_.data(),kdl_chain_.getNrOfJoints());
+    joint_friction_ = Eigen::VectorXd::Map(joints_friction_.data(),kdl_chain_.getNrOfJoints());
+    joint_damping_ = Eigen::VectorXd::Map(joints_damping_.data(),kdl_chain_.getNrOfJoints());
+    
     massMatrix_.resize(kdl_chain_.getNrOfJoints());
     massMatrixInv_.resize(kdl_chain_.getNrOfJoints());
     gravityTorque_.resize(kdl_chain_.getNrOfJoints());
@@ -83,6 +93,26 @@ bool ChainUtilsBase::init(
     inverseDynamicsSolver_.reset(new KDL::ChainIdSolver_RNE(kdl_chain_,gravity_vector));
 
     return true;
+}
+
+Eigen::VectorXd& ChainUtilsBase::getJointLowerLimit()
+{
+    return this->joint_lower_limit_;
+}
+
+Eigen::VectorXd& ChainUtilsBase::getJointUpperLimit()
+{
+    return this->joint_upper_limit_;
+}
+
+Eigen::VectorXd& ChainUtilsBase::getJointDamping()
+{
+    return this->joint_damping_;
+}
+
+Eigen::VectorXd& ChainUtilsBase::getJointFriction()
+{
+    return this->joint_friction_;
 }
 
 void ChainUtilsBase::printChain() {
