@@ -280,9 +280,9 @@ void ChainUtilsBase::updateModel()
     computeJacobian();
 }
 
-void ChainUtils::setInertiaMatrixAsDiagonal()
+void ChainUtilsBase::setInertiaMatrixAsDiagonal()
 {
-    massMatrix_.data =  Eigen::Matrix<double,-1,-1>( massMatrix_.data.diagonal().asDiagonal() );
+    massMatrix_.data =  Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic>( massMatrix_.data.diagonal().asDiagonal() );
     this->inverseInertiaMatrix();
 }
 
