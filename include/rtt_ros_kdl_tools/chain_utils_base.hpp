@@ -170,13 +170,13 @@ public:
 
     std::vector<double>& getJointsDamping();
     std::vector<double>& getJointsFriction();
-    
+
     Eigen::VectorXd& getJointLowerLimit();
     Eigen::VectorXd& getJointUpperLimit();
 
     Eigen::VectorXd& getJointDamping();
     Eigen::VectorXd& getJointFriction();
-    
+
     std::vector< std::string >& getLimitedJointNames();
 
     /**
@@ -245,6 +245,12 @@ public:
         }
     }
     void updateModel();
+
+    /**
+     * @brief Modifies the inertia matrix to keep the diagonal elements solely, and recompute the inverse accordingly
+     */
+     void setInertiaMatrixAsDiagonal();
+
     /**
     * @brief Add external forces from a force/torque sensor
     * @param[in] external_wrench The external force associate with a link, expressed in the link frame, at the link origin.

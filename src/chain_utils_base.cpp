@@ -59,12 +59,12 @@ bool ChainUtilsBase::init(
     joint_upper_limit_.resize(kdl_chain_.getNrOfJoints());
     joint_friction_.resize(kdl_chain_.getNrOfJoints());
     joint_damping_.resize(kdl_chain_.getNrOfJoints());
-    
+
     joint_lower_limit_ = Eigen::VectorXd::Map(joints_lower_limit_.data(),kdl_chain_.getNrOfJoints());
     joint_upper_limit_ = Eigen::VectorXd::Map(joints_upper_limit_.data(),kdl_chain_.getNrOfJoints());
     joint_friction_ = Eigen::VectorXd::Map(joints_friction_.data(),kdl_chain_.getNrOfJoints());
     joint_damping_ = Eigen::VectorXd::Map(joints_damping_.data(),kdl_chain_.getNrOfJoints());
-    
+
     massMatrix_.resize(kdl_chain_.getNrOfJoints());
     massMatrixInv_.resize(kdl_chain_.getNrOfJoints());
     gravityTorque_.resize(kdl_chain_.getNrOfJoints());
@@ -280,6 +280,12 @@ void ChainUtilsBase::updateModel()
     computeJacobian();
 }
 
+void ChainUtils::setInertiaMatrixAsDiagonal()
+{
+    massMatrix_.data =  Eigen::Matrix<double,-1,-1>( massMatrix_.data.diagonal().asDiagonal() );
+    this->inverseInertiaMatrix();
+}
+
 void ChainUtilsBase::computeJdotQdot()
 {
     jntToJacDotSolver_->JntToJacDot(qqd_, jdot_qdot_);
@@ -292,6 +298,7 @@ void ChainUtilsBase::inverseInertiaMatrix()
 {
 	massMatrixInv_.data = massMatrix_.data.inverse();
 }
+
 KDL::RotationalInertia& ChainUtilsBase::getSegmentInertiaMatrix(unsigned int seg_idx)
 {
     rot_intertia = this->Chain().getSegment(seg_idx).getInertia().getRotationalInertia();
