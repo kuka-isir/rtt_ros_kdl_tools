@@ -78,9 +78,9 @@ bool ChainUtilsBase::init(
 
     tmp_array_pos.resize(kdl_chain_.getNrOfJoints());
 
-    ext_wrench_torque_ = zero_kdl;
-    ext_add_torque_ = zero_kdl;
-    ext_torque_all_ = zero_kdl;
+    ext_wrench_torque_.data.setZero(kdl_chain_.getNrOfJoints());
+    ext_add_torque_.data.setZero(kdl_chain_.getNrOfJoints());
+    ext_torque_all_.data.setZero(kdl_chain_.getNrOfJoints());
 
     f_ext_.resize(kdl_chain_.getNrOfSegments());
     std::fill(f_ext_.begin(),f_ext_.end(),KDL::Wrench());
