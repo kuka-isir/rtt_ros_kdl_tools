@@ -1,4 +1,3 @@
-
 sudo: required
 dist: trusty
 language: generic
@@ -8,10 +7,15 @@ env:
     - ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
     - NOT_TEST_BUILD=true
     - NOT_TEST_INSTALL=true
+    
   matrix:
     - ROS_DISTRO="indigo"
     - ROS_DISTRO="jade"
     - ROS_DISTRO="kinetic"
+
+matrix:
+  allow_failures:
+    - env: ROS_DISTRO="kinetic"
 
 install:
   - git clone https://github.com/ros-industrial/industrial_ci.git .ci_config
