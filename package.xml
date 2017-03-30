@@ -6,7 +6,7 @@
 
   <maintainer email="hoarau.robotics@gmail.com">Antoine Hoarau</maintainer>
 
-  <license>GPL</license>
+  <license>CeCILL-C</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 
