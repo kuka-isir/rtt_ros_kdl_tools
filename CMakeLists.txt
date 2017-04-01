@@ -14,16 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   tf_conversions
   eigen_conversions
   kdl_conversions
+  trac_ik_lib
 )
-
-find_package(trac_ik_lib QUIET)
-
-if(${trac_ik_lib_FOUND})
-    include_directories(${trac_ik_lib_INCLUDE_DIRS})
-else()
-    message(WARNING "Not building with trac_ik, please consider installing it\n\nhttps://bitbucket.org/traclabs/trac_ik or in the apt-get")
-endif()
-
 
 find_package(orocos_kdl REQUIRED)
 
