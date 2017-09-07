@@ -386,9 +386,9 @@ bool initJointStateMsgFromString(const std::string& robot_description, sensor_ms
     {
         if(j->second->limits)
         {
-            if(j->second->limits->lower == j->second->limits->upper)
+            if(j->second->limits->lower == j->second->limits->upper && j->second->type != urdf::Joint::CONTINUOUS)
             {
-                // NOTE: Setting pseudo fixed-joints to FIXED, so that KDL does not considers them.
+                // NOTE: Setting pseudo fixed-joints to FIXED, so that KDL does not considers them. Except for continuous joints where limits do not exist
                 ROS_INFO_STREAM("Removing fixed joint "<<j->second->name);
                 continue;
             }
