@@ -365,6 +365,22 @@ sensor_msgs::JointState initJointStateFromKDLCHain(const KDL::Chain& kdl_chain)
     return joint_state;
 }
 
+bool recursiveTreeJointExploration( const KDL::SegmentMap::const_iterator &element, std::vector<std::string> &joint_names )
+{
+  if ( element->second.children.size() <= 0 ) {
+    // there is no need to continue if the link has no children
+    return false;
+  } else {
+    for ( unsigned int i=0; i < element->second.children.size() ; ++i ) {
+      // if it is not a fixed joint, we store it (getJoint() returns the parent joint).
+      if ( GetTreeElementSegment(element->second.children[i]->second).getJoint().getType() != KDL::Joint::None )
+        joint_names.push_back( GetTreeElementSegment(element->second.children[i]->second).getJoint().getName() );
+      // we handle the children
+      recursiveTreeJointExploration( element->second.children[i], joint_names );
+    }
+  }
+  return true;
+}
 
 bool initJointStateMsgFromString(const std::string& robot_description, sensor_msgs::JointState& joint_state)
 {
@@ -378,33 +394,21 @@ bool initJointStateMsgFromString(const std::string& robot_description, sensor_ms
     }
 
     ROS_DEBUG("Robot name : [%s]",model.getName().c_str());
+
+    // We need to build the tree. See below.
+    KDL::Tree kdl_tree;
+    if (!kdl_parser::treeFromString(robot_description,kdl_tree)) {
+        ROS_ERROR("Failed to construct kdl tree");
+        return false;
+    }
     // Create a blank joint state msg
     joint_state = sensor_msgs::JointState();
 
-    // Reading Joints from urdf model
-    for (std::map<std::string, boost::shared_ptr<urdf::Joint> >::iterator j=model.joints_.begin(); j!=model.joints_.end(); ++j)
-    {
-        if(j->second->limits)
-        {
-            if(j->second->limits->lower == j->second->limits->upper && j->second->type != urdf::Joint::CONTINUOUS)
-            {
-                // NOTE: Setting pseudo fixed-joints to FIXED, so that KDL does not considers them. Except for continuous joints where limits do not exist
-                ROS_INFO_STREAM("Removing fixed joint "<<j->second->name);
-                continue;
-            }
-        }
-
-        if(j->second->type != urdf::Joint::FIXED &&
-                j->second->type != urdf::Joint::FLOATING)
-        {
-            const std::string name = j->first;
-            ROS_DEBUG_STREAM("Adding Joint "<< name);
-            joint_state.name.push_back(name);
-            joint_state.position.push_back(0.);
-            joint_state.velocity.push_back(0.);
-            joint_state.effort.push_back(0.);
-        }
-    }
+    // The objective is to find all non-fixed joints in the correct (tree) order. Exploring the raw model.joints_ would only get the joints in the alphabetical order.
+    recursiveTreeJointExploration( kdl_tree.getRootSegment(), joint_state.name );
+    joint_state.position.resize( joint_state.name.size(), 0.0 );
+    joint_state.velocity.resize( joint_state.name.size(), 0.0 );
+    joint_state.effort.resize( joint_state.name.size(), 0.0 );
     return true;
 }
 

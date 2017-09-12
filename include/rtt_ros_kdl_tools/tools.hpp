@@ -82,6 +82,11 @@ namespace rtt_ros_kdl_tools{
 
     void printChain(const KDL::Chain& kdl_chain);
 
+    /** \brief explores a KDL::Tree and gathers all non-fixed joint names in order
+  	 * \param[in] element the root_element
+     * \param[out] joint_names the non-fixed joints names in the order of appearance in the tree
+  	 */
+    bool recursiveTreeJointExploration( const KDL::SegmentMap::const_iterator &element, std::vector<std::string> &joint_names );
     bool initJointStateMsgFromString(const std::string& robot_description, sensor_msgs::JointState& joint_state);
     unsigned int getNumberOfJointsFromROSParamURDF(const std::string& robot_description_ros_name = "robot_description",
                                    const std::string& root_link_ros_name = "root_link",
