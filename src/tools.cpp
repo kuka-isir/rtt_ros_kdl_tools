@@ -39,9 +39,9 @@ bool initChainFromString(const std::string& robot_description,
     {
       if(joint->second->limits)
       {
-        if(joint->second->limits->lower == joint->second->limits->upper)
+        if(joint->second->limits->lower == joint->second->limits->upper && joint->second->type != urdf::Joint::CONTINUOUS)
         {
-            // HACK: Setting pseudo fixed-joints to FIXED, so that KDL does not considers them.
+            // HACK: Setting pseudo fixed-joints to FIXED, so that KDL does not considers them. Except for continuous joints where limits do not exist
             joint->second->type = urdf::Joint::FIXED;
             // ROS_INFO_STREAM("Removing fixed joint "<<joint->second->name);
         }
