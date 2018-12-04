@@ -156,6 +156,8 @@ protected:
                                const unsigned int& joint_idx,
                                const unsigned int& column_idx,
                                const int& representation);
+    
+    void updateInternalDataStructures() {}
 private:
     
     const Chain chain;

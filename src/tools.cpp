@@ -35,15 +35,15 @@ bool initChainFromString(const std::string& robot_description,
       return false;
     }
 
-    for (std::map<std::string,boost::shared_ptr<urdf::Joint> >::iterator joint = urdf_model.joints_.begin();joint != urdf_model.joints_.end(); ++joint)
+    for(auto joint : urdf_model.joints_)
     {
-      if(joint->second->limits)
+      if((& joint)->second->limits)
       {
-        if(joint->second->limits->lower == joint->second->limits->upper && joint->second->type != urdf::Joint::CONTINUOUS)
+        if((& joint)->second->limits->lower == (& joint)->second->limits->upper && (& joint)->second->type != urdf::Joint::CONTINUOUS)
         {
             // HACK: Setting pseudo fixed-joints to FIXED, so that KDL does not considers them. Except for continuous joints where limits do not exist
-            joint->second->type = urdf::Joint::FIXED;
-            // ROS_INFO_STREAM("Removing fixed joint "<<joint->second->name);
+            (& joint)->second->type = urdf::Joint::FIXED;
+            // ROS_INFO_STREAM("Removing fixed joint "<<(& joint)->second->name);
         }
       }
     }
@@ -262,12 +262,12 @@ bool readJntLimitsFromROSParamURDF(std::vector<std::string>& limited_jnt_names,
     for(int i=0; i<nbr_segs; i++)
         seg_names.push_back(kdl_chain.getSegment(i).getJoint().getName());
 
-    for (std::map<std::string,boost::shared_ptr<urdf::Joint> >::iterator joint = urdf_model.joints_.begin(); joint != urdf_model.joints_.end(); ++joint) {
-        if ( joint->second->limits && std::find(seg_names.begin(), seg_names.end(),joint->second->name)!=seg_names.end() ) {
-            if (joint->second->limits->lower != joint->second->limits->upper) {
-                limited_jnt_names.push_back(joint->second->name);
-                lower_limits.push_back(joint->second->limits->lower);
-                upper_limits.push_back(joint->second->limits->upper);
+    for(auto joint : urdf_model.joints_){
+        if ( (& joint)->second->limits && std::find(seg_names.begin(), seg_names.end(),(& joint)->second->name)!=seg_names.end() ) {
+            if ((& joint)->second->limits->lower != (& joint)->second->limits->upper) {
+                limited_jnt_names.push_back((& joint)->second->name);
+                lower_limits.push_back((& joint)->second->limits->lower);
+                upper_limits.push_back((& joint)->second->limits->upper);
             }
         }
     }
@@ -322,16 +322,16 @@ bool readJntDynamicsFromROSParamURDF(const std::vector<std::string>& desired_jnt
 
     for(int i=0; i<nbr_segs; i++)
         seg_names.push_back(kdl_chain.getSegment(i).getJoint().getName());
-	
-	unsigned int idx = 0;
-    for (std::map<std::string,boost::shared_ptr<urdf::Joint> >::iterator joint = urdf_model.joints_.begin(); joint != urdf_model.joints_.end(); ++joint) {
-        if ( joint->second->limits && std::find(seg_names.begin(), seg_names.end(),joint->second->name)!=seg_names.end() ) {
-            if (joint->second->limits->lower != joint->second->limits->upper) { // these ones are fixed joints !
-				idx = find(desired_jnt_names.begin(), desired_jnt_names.end(), joint->second->name) - desired_jnt_names.begin();
+    
+    unsigned int idx = 0;
+    for(auto joint : urdf_model.joints_){
+        if ( (& joint)->second->limits && std::find(seg_names.begin(), seg_names.end(),(& joint)->second->name)!=seg_names.end() ) {
+            if ((& joint)->second->limits->lower != (& joint)->second->limits->upper) { // these ones are fixed joints !
+				idx = find(desired_jnt_names.begin(), desired_jnt_names.end(), (& joint)->second->name) - desired_jnt_names.begin();
 				if( idx < friction.size() )
 				{
-					friction[idx] = (joint->second->dynamics->friction);
-					damping[idx] = (joint->second->dynamics->damping);
+					friction[idx] = ((& joint)->second->dynamics->friction);
+					damping[idx] = ((& joint)->second->dynamics->damping);
 				}
             }
         }
