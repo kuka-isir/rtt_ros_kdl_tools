@@ -17,9 +17,10 @@ bool ChainUtilsBase::init(
 	this->root_link_ros_name = root_link_name;
 	this->tip_link_ros_name = tip_link_name;
 	this->gravity_vector = gravity_vector;
-    this->ft_sensor_measure_link = tip_link_name;
+	this->ft_sensor_measure_link = tip_link_name;
 
 	ros::param::get(root_link_name, root_link_name_);
+	ros::param::get(tip_link_name, tip_link_name_);
 
     if(!rtt_ros_kdl_tools::initChainFromROSParamURDF(kdl_tree_, kdl_chain_))
     {
